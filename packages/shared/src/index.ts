@@ -1,3 +1,4 @@
+// types
 export * from './types/events.js'
 export * from './types/api.js'
 export * from './types/analytics.js'
