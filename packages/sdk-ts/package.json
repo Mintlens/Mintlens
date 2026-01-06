@@ -1,0 +1,82 @@
+{
+  "name": "@mintlens/sdk",
+  "version": "0.1.0",
+  "description": "Official TypeScript SDK for Mintlens — LLM cost tracking & governance",
+  "keywords": [
+    "llm",
+    "ai",
+    "cost-tracking",
+    "openai",
+    "anthropic",
+    "observability",
+    "finops",
+    "tokens",
+    "sdk"
+  ],
+  "license": "Apache-2.0",
+  "homepage": "https://mintlens.io",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mintlens/mintlens.git",
+    "directory": "packages/sdk-ts"
+  },
+  "bugs": {
+    "url": "https://github.com/mintlens/mintlens/issues"
+  },
+  "author": "Mintlens <hello@mintlens.io>",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ci": "vitest run --coverage",
+    "clean": "rimraf dist"
+  },
+  "peerDependencies": {
+    "@anthropic-ai/sdk": ">=0.30.0",
+    "openai": ">=4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@anthropic-ai/sdk": {
+      "optional": true
+    },
+    "openai": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.36.0",
+    "@mintlens/shared": "*",
+    "@types/node": "^22.0.0",
+    "@vitest/coverage-v8": "^2.1.1",
+    "openai": "^4.67.3",
+    "rimraf": "^6.0.1",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.1"
+  },
+  "dependencies": {
+    "@mintlens/shared": "*"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
