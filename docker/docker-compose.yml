@@ -1,0 +1,53 @@
+###############################################################
+# Mintlens — Local Development Docker Compose
+# Usage: docker compose up -d
+###############################################################
+version: "3.9"
+
+name: mintlens-dev
+
+networks:
+  mintlens_net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mintlens_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mintlens}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-mintlens_dev}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mintlens_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mintlens}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: mintlens_redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-changeme}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mintlens_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-changeme}", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
