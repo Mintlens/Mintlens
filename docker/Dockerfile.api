@@ -1,0 +1,52 @@
+# ─────────────────────────────────────────────────────────────────
+# Mintlens API — Multi-stage Dockerfile
+# ─────────────────────────────────────────────────────────────────
+ARG NODE_VERSION=22
+ARG PNPM_VERSION=10.23.0
+
+# ── Stage 1: Base ─────────────────────────────────────────────────
+FROM node:${NODE_VERSION}-alpine AS base
+WORKDIR /app
+RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
+
+# ── Stage 2: Dependencies ─────────────────────────────────────────
+FROM base AS deps
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml turbo.json ./
+COPY apps/api/package.json ./apps/api/
+COPY packages/shared/package.json ./packages/shared/
+RUN pnpm install --frozen-lockfile --prod=false
+
+# ── Stage 3: Build ────────────────────────────────────────────────
+FROM base AS builder
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
+COPY . .
+RUN pnpm --filter @mintlens/shared build
+RUN pnpm --filter @mintlens/api build
+
+# ── Stage 4: Production ───────────────────────────────────────────
+FROM node:${NODE_VERSION}-alpine AS production
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Non-root user for security
+RUN addgroup --system --gid 1001 mintlens && \
+    adduser --system --uid 1001 --ingroup mintlens mintlens
+
+COPY --from=builder --chown=mintlens:mintlens /app/apps/api/dist ./dist
+COPY --from=builder --chown=mintlens:mintlens /app/apps/api/drizzle ./drizzle
+COPY --from=builder --chown=mintlens:mintlens /app/apps/api/package.json ./
+
+# Install only production dependencies
+RUN npm install --omit=dev --ignore-scripts
+
+USER mintlens
+
+EXPOSE 3001
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD wget -qO- http://localhost:3001/health || exit 1
+
+CMD ["node", "dist/app.js"]
