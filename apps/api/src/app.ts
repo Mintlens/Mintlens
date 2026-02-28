@@ -49,6 +49,13 @@ export async function buildApp() {
     timestamp: new Date().toISOString(),
   }))
 
+  // ── Routes ────────────────────────────────────────────────────
+  const { authRoutes }      = await import('./modules/auth/presentation/auth.routes.js')
+  const { ingestionRoutes } = await import('./modules/ingestion/presentation/ingestion.routes.js')
+
+  await app.register(authRoutes,      { prefix: '/v1/auth' })
+  await app.register(ingestionRoutes, { prefix: '/v1/events' })
+
   // ── Global error handler ──────────────────────────────────────
   const { AppError } = await import('./shared/errors/app-errors.js')
 
@@ -82,6 +89,13 @@ async function main() {
     const app = await buildApp()
     const port = Number(process.env['API_PORT'] ?? 3001)
     const host = process.env['API_HOST'] ?? '0.0.0.0'
+
+    // Start BullMQ worker (runs in same process for simplicity; split to separate
+    // Dockerfile target in production if queue throughput requires it)
+    const { startLlmEventsWorker } = await import(
+      './modules/ingestion/application/process-llm-event.worker.js'
+    )
+    startLlmEventsWorker()
 
     await app.listen({ port, host })
     logger.info({ port, host }, '🔭 Mintlens API running')
