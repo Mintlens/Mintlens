@@ -1,6 +1,6 @@
 # Contributing to Mintlens
 
-Thank you for your interest in contributing! Mintlens is an open-core project — the SDKs are Apache 2.0 licensed and we welcome contributions from the community.
+Thank you for your interest in contributing! Mintlens is an open-core project. The SDKs and core platform (`apps/api`, `apps/web`) are Apache 2.0 licensed and we welcome contributions. The `packages/enterprise` directory is proprietary and not open to external contributions.
 
 ## Table of Contents
 

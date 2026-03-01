@@ -197,12 +197,13 @@ docker compose -f docker/docker-compose.prod.yml up -d
 ```
 mintlens/
 ├── apps/
-│   ├── api/           # Fastify + TypeScript — Hexagonal Architecture
-│   └── web/           # Next.js 15 — Dashboard
+│   ├── api/           # Fastify + TypeScript — Hexagonal Architecture  [Apache 2.0]
+│   └── web/           # Next.js 15 — Dashboard                         [Apache 2.0]
 ├── packages/
-│   ├── sdk-ts/        # @mintlens/sdk — TypeScript SDK (Apache 2.0)
-│   ├── sdk-python/    # mintlens — Python SDK (Apache 2.0)
-│   └── shared/        # Shared TypeScript types
+│   ├── sdk-ts/        # @mintlens/sdk — TypeScript SDK                 [Apache 2.0]
+│   ├── sdk-python/    # mintlens — Python SDK                          [Apache 2.0]
+│   ├── shared/        # Shared TypeScript types                        [Apache 2.0]
+│   └── enterprise/    # SSO, audit logs, multi-org, billing            [Proprietary]
 └── docker/            # Docker Compose + Nginx configs
 ```
 
@@ -242,9 +243,20 @@ Areas where help is most valuable:
 
 ## License
 
-The SDKs (`packages/sdk-ts`, `packages/sdk-python`, `packages/shared`) are licensed under the **Apache 2.0** license.
+Mintlens uses a **dual-license model**:
 
-The platform (apps/api, apps/web) is proprietary and available as a hosted service at [mintlens.io](https://mintlens.io).
+| Component | License | Notes |
+|-----------|---------|-------|
+| `packages/sdk-ts` | Apache 2.0 | TypeScript SDK — use freely in any project |
+| `packages/sdk-python` | Apache 2.0 | Python SDK — use freely in any project |
+| `packages/shared` | Apache 2.0 | Shared types |
+| `apps/api` | Apache 2.0 | Core API — self-host freely |
+| `apps/web` | Apache 2.0 | Core dashboard — self-host freely |
+| `packages/enterprise` | Proprietary | SSO, audit logs, multi-org, billing — commercial license required |
+
+The open-source core (everything except `packages/enterprise`) can be self-hosted freely under Apache 2.0. Enterprise features require a commercial license — contact **sales@mintlens.io**.
+
+The hosted cloud service is available at [mintlens.io](https://mintlens.io).
 
 ---
 
