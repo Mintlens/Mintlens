@@ -1,0 +1,60 @@
+Mintlens Enterprise License
+
+Copyright (c) 2026 Mintlens. All rights reserved.
+
+NOTICE TO ALL USERS: This software and associated documentation files
+(the "Enterprise Package") are the proprietary and confidential property
+of Mintlens.
+
+Permission is NOT granted to use, copy, modify, merge, publish, distribute,
+sublicense, sell, or otherwise exploit this software or any portion thereof,
+except under the terms of a valid commercial license agreement executed with
+Mintlens.
+
+---
+
+PERMITTED USE (Free Trial)
+
+Subject to the terms below, Mintlens grants you a limited, non-exclusive,
+non-transferable, revocable license to install and evaluate this Enterprise
+Package solely for internal, non-production evaluation purposes for a period
+not to exceed 30 days.
+
+RESTRICTIONS
+
+You may not:
+  (a) Use this software in a production environment without a paid license
+  (b) Sublicense, sell, resell, transfer, assign, or otherwise dispose of
+      this software
+  (c) Modify or make derivative works based upon this software for commercial
+      redistribution
+  (d) Reverse engineer, disassemble, decompile, decode, adapt, or otherwise
+      attempt to derive or gain access to the source code, except to the
+      extent that such activity is expressly permitted by applicable law
+  (e) Use this software to build a competing product or service
+
+COMMERCIAL LICENSE
+
+To use Mintlens Enterprise features in production, contact:
+  sales@mintlens.io
+
+Enterprise features include:
+  - SSO / SAML 2.0 authentication
+  - Advanced audit logs and compliance exports
+  - Multi-organisation management
+  - Stripe Billing integration
+  - Salesforce CRM integration
+  - Guaranteed SLA and priority support
+  - Custom data retention policies
+  - Dedicated onboarding
+
+DISCLAIMER OF WARRANTIES
+
+THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+IN NO EVENT SHALL MINTLENS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.

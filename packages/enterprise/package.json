@@ -1,0 +1,16 @@
+{
+  "name": "@mintlens/enterprise",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mintlens Enterprise features — SSO, audit logs, multi-org, billing integrations",
+  "license": "SEE LICENSE IN LICENSE",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@mintlens/shared": "*",
+    "drizzle-orm": "^0.36.0",
+    "zod": "^3.23.8"
+  }
+}

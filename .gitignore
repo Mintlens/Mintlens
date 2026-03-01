@@ -51,6 +51,10 @@ Thumbs.db
 # Claude Code local settings (never commit)
 .claude/
 
+# Enterprise package — proprietary, distributed separately, never published to this repo
+# Uncomment the line below if you keep enterprise source in a private submodule/repo
+# packages/enterprise/src/
+
 # Editor
 .vscode/*
 !.vscode/extensions.json
