@@ -50,11 +50,15 @@ export async function buildApp() {
   }))
 
   // ── Routes ────────────────────────────────────────────────────
-  const { authRoutes }      = await import('./modules/auth/presentation/auth.routes.js')
-  const { ingestionRoutes } = await import('./modules/ingestion/presentation/ingestion.routes.js')
+  const { authRoutes }       = await import('./modules/auth/presentation/auth.routes.js')
+  const { ingestionRoutes }  = await import('./modules/ingestion/presentation/ingestion.routes.js')
+  const { analyticsRoutes }  = await import('./modules/analytics/presentation/analytics.routes.js')
+  const { projectsRoutes }   = await import('./modules/projects/presentation/projects.routes.js')
 
   await app.register(authRoutes,      { prefix: '/v1/auth' })
   await app.register(ingestionRoutes, { prefix: '/v1/events' })
+  await app.register(analyticsRoutes, { prefix: '/v1/analytics' })
+  await app.register(projectsRoutes,  { prefix: '/v1/projects' })
 
   // ── Global error handler ──────────────────────────────────────
   const { AppError } = await import('./shared/errors/app-errors.js')
