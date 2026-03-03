@@ -48,15 +48,16 @@ describe('period-over-period change', () => {
 
 describe('date range helpers', () => {
   it('prior period mirrors the current period length', () => {
-    const from = new Date('2026-02-01T00:00:00Z')
-    const to   = new Date('2026-03-01T00:00:00Z')
+    // Jan 1 → Feb 1 = 31 days, so previous period = Dec 1 → Jan 1
+    const from = new Date('2026-01-01T00:00:00Z')
+    const to   = new Date('2026-02-01T00:00:00Z')
     const rangeMs = to.getTime() - from.getTime()
 
     const prevFrom = new Date(from.getTime() - rangeMs)
     const prevTo   = from
 
-    expect(prevFrom.toISOString().slice(0, 10)).toBe('2026-01-01')
-    expect(prevTo.toISOString().slice(0, 10)).toBe('2026-02-01')
+    expect(prevFrom.toISOString().slice(0, 10)).toBe('2025-12-01')
+    expect(prevTo.toISOString().slice(0, 10)).toBe('2026-01-01')
     // Same duration
     expect(prevTo.getTime() - prevFrom.getTime()).toBe(rangeMs)
   })
