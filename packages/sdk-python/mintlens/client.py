@@ -13,7 +13,7 @@ import logging
 
 logger = logging.getLogger("mintlens")
 
-SDK_VERSION = "0.1.0"
+SDK_VERSION = "0.1.1"
 DEFAULT_API_URL = "https://api.mintlens.io"
 DEFAULT_BATCH_SIZE = 50
 DEFAULT_FLUSH_INTERVAL_S = 1.0
