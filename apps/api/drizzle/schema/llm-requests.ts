@@ -10,6 +10,7 @@ export const llmProviderEnum = pgEnum('llm_provider', [
   'google',
   'mistral',
   'cohere',
+  'xai',
   'other',
 ])
 

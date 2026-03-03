@@ -15,34 +15,47 @@ interface ModelPricing {
 
 const MODEL_PRICING: Record<string, ModelPricing> = {
   // ── OpenAI ──────────────────────────────────────────────────────────
-  'gpt-4o': { inputPricePerMToken: 2.5, outputPricePerMToken: 10 },
+  'gpt-5.2':     { inputPricePerMToken: 1.75, outputPricePerMToken: 14 },
+  'gpt-5.2-pro': { inputPricePerMToken: 21,   outputPricePerMToken: 168 },
+  'gpt-5-mini':  { inputPricePerMToken: 0.25, outputPricePerMToken: 2 },
+  'gpt-4o':      { inputPricePerMToken: 2.5,  outputPricePerMToken: 10 },
   'gpt-4o-mini': { inputPricePerMToken: 0.15, outputPricePerMToken: 0.6 },
-  'gpt-4-turbo': { inputPricePerMToken: 10, outputPricePerMToken: 30 },
-  'gpt-4': { inputPricePerMToken: 30, outputPricePerMToken: 60 },
-  'gpt-3.5-turbo': { inputPricePerMToken: 0.5, outputPricePerMToken: 1.5 },
-  'o1': { inputPricePerMToken: 15, outputPricePerMToken: 60 },
-  'o1-mini': { inputPricePerMToken: 3, outputPricePerMToken: 12 },
-  'o3-mini': { inputPricePerMToken: 1.1, outputPricePerMToken: 4.4 },
+  'gpt-4-turbo': { inputPricePerMToken: 10,   outputPricePerMToken: 30 },
+  'gpt-4':       { inputPricePerMToken: 30,   outputPricePerMToken: 60 },
+  'gpt-3.5-turbo':          { inputPricePerMToken: 0.5,  outputPricePerMToken: 1.5 },
+  'o1':                     { inputPricePerMToken: 15,   outputPricePerMToken: 60 },
+  'o1-mini':                { inputPricePerMToken: 3,    outputPricePerMToken: 12 },
+  'o3-mini':                { inputPricePerMToken: 1.1,  outputPricePerMToken: 4.4 },
   'text-embedding-3-small': { inputPricePerMToken: 0.02, outputPricePerMToken: 0 },
   'text-embedding-3-large': { inputPricePerMToken: 0.13, outputPricePerMToken: 0 },
 
   // ── Anthropic ───────────────────────────────────────────────────────
-  'claude-opus-4-6': { inputPricePerMToken: 15, outputPricePerMToken: 75 },
-  'claude-sonnet-4-6': { inputPricePerMToken: 3, outputPricePerMToken: 15 },
-  'claude-haiku-4-5-20251001': { inputPricePerMToken: 0.8, outputPricePerMToken: 4 },
-  'claude-3-5-sonnet-20241022': { inputPricePerMToken: 3, outputPricePerMToken: 15 },
-  'claude-3-5-haiku-20241022': { inputPricePerMToken: 0.8, outputPricePerMToken: 4 },
-  'claude-3-opus-20240229': { inputPricePerMToken: 15, outputPricePerMToken: 75 },
+  'claude-opus-4-6':            { inputPricePerMToken: 5,   outputPricePerMToken: 25 },
+  'claude-sonnet-4-6':          { inputPricePerMToken: 3,   outputPricePerMToken: 15 },
+  'claude-haiku-4-5':           { inputPricePerMToken: 1,   outputPricePerMToken: 5 },
+  'claude-haiku-4-5-20251001':  { inputPricePerMToken: 1,   outputPricePerMToken: 5 },
+  'claude-3-5-sonnet-20241022': { inputPricePerMToken: 3,   outputPricePerMToken: 15 },
+  'claude-3-5-haiku-20241022':  { inputPricePerMToken: 0.8, outputPricePerMToken: 4 },
+  'claude-3-opus-20240229':     { inputPricePerMToken: 15,  outputPricePerMToken: 75 },
 
   // ── Google ──────────────────────────────────────────────────────────
-  'gemini-2.0-flash': { inputPricePerMToken: 0.1, outputPricePerMToken: 0.4 },
-  'gemini-1.5-pro': { inputPricePerMToken: 1.25, outputPricePerMToken: 5 },
+  'gemini-3-pro':     { inputPricePerMToken: 2,     outputPricePerMToken: 12 },
+  'gemini-2.5-flash': { inputPricePerMToken: 0.1,   outputPricePerMToken: 0.4 },
+  'gemini-2.0-flash': { inputPricePerMToken: 0.1,   outputPricePerMToken: 0.4 },
+  'gemini-1.5-pro':   { inputPricePerMToken: 1.25,  outputPricePerMToken: 5 },
   'gemini-1.5-flash': { inputPricePerMToken: 0.075, outputPricePerMToken: 0.3 },
 
   // ── Mistral ─────────────────────────────────────────────────────────
-  'mistral-large-latest': { inputPricePerMToken: 2, outputPricePerMToken: 6 },
-  'mistral-small-latest': { inputPricePerMToken: 0.1, outputPricePerMToken: 0.3 },
-  'codestral-latest': { inputPricePerMToken: 0.2, outputPricePerMToken: 0.6 },
+  'mistral-large-3':      { inputPricePerMToken: 0.5,  outputPricePerMToken: 1.5 },
+  'mistral-large-latest': { inputPricePerMToken: 0.5,  outputPricePerMToken: 1.5 },
+  'mistral-medium-3':     { inputPricePerMToken: 0.4,  outputPricePerMToken: 2 },
+  'mistral-small-3':      { inputPricePerMToken: 0.05, outputPricePerMToken: 0.08 },
+  'mistral-small-latest': { inputPricePerMToken: 0.05, outputPricePerMToken: 0.08 },
+  'codestral-latest':     { inputPricePerMToken: 0.2,  outputPricePerMToken: 0.6 },
+
+  // ── xAI ─────────────────────────────────────────────────────────────
+  'grok-4':        { inputPricePerMToken: 3,   outputPricePerMToken: 15 },
+  'grok-4.1-fast': { inputPricePerMToken: 0.2, outputPricePerMToken: 0.5 },
 }
 
 /** Fallback pricing when the model is unknown */
