@@ -6,7 +6,6 @@ import { getCostExplorerUseCase } from '../application/get-cost-explorer.usecase
 import { getTenantsOverviewUseCase } from '../application/get-tenants-overview.usecase.js'
 import { summaryQuery, costExplorerQuery, tenantsOverviewQuery } from './analytics.schemas.js'
 import { microToUsd } from '../../ingestion/application/cost-calculator.js'
-import { ValidationError } from '../../../shared/errors/app-errors.js'
 
 const withProject = z.object({ projectId: z.string().uuid() })
 
@@ -42,12 +41,12 @@ export async function analyticsRoutes(app: FastifyInstance) {
       projectId:   q.projectId,
       from:        q.from,
       to:          q.to,
-      featureKey:  q.featureKey,
-      tenantId:    q.tenantId,
-      provider:    q.provider,
-      model:       q.model,
-      environment: q.environment,
       granularity: q.granularity,
+      ...(q.featureKey  !== undefined ? { featureKey:  q.featureKey }  : {}),
+      ...(q.tenantId    !== undefined ? { tenantId:    q.tenantId }    : {}),
+      ...(q.provider    !== undefined ? { provider:    q.provider }    : {}),
+      ...(q.model       !== undefined ? { model:       q.model }       : {}),
+      ...(q.environment !== undefined ? { environment: q.environment } : {}),
     })
 
     return reply.send({ data: result })
