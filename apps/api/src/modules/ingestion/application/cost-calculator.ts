@@ -69,3 +69,8 @@ export function calculateCostMicro(
   const p = lookup(model)
   return Math.round(tokensInput * p.input + tokensOutput * p.output)
 }
+
+/** Convert microdollars to USD (1 USD = 1 000 000 µ$) */
+export function microToUsd(micro: number): number {
+  return micro / 1_000_000
+}

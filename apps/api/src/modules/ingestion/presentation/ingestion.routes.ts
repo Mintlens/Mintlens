@@ -22,7 +22,7 @@ export async function ingestionRoutes(app: FastifyInstance) {
       const { events } = req.body
 
       const jobs = events.map((event) => ({
-        name: 'llm-event',
+        name: 'llm-event' as const,
         data: { projectId, organisationId, event },
       }))
 
