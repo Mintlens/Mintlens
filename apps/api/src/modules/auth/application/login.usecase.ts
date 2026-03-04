@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs'
 import { eq } from 'drizzle-orm'
 import { db } from '../../../shared/infrastructure/db.js'
-import { users } from '../../../drizzle/schema/index.js'
+import { users } from '#schema'
 import { AuthError } from '../../../shared/errors/app-errors.js'
 import type { LoginInput, AuthTokens } from '../domain/auth.types.js'
 import { issueTokens } from './auth.helpers.js'

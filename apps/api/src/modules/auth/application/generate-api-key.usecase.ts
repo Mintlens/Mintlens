@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto'
 import { eq, and, isNull } from 'drizzle-orm'
 import { db } from '../../../shared/infrastructure/db.js'
-import { apiKeys, projects } from '../../../drizzle/schema/index.js'
+import { apiKeys, projects } from '#schema'
 import { ForbiddenError, NotFoundError } from '../../../shared/errors/app-errors.js'
 import type { GenerateApiKeyInput, GeneratedApiKey } from '../domain/auth.types.js'
 
