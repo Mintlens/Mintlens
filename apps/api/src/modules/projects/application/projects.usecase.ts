@@ -1,17 +1,17 @@
 import { eq, and, isNull, sql } from 'drizzle-orm'
 import { db } from '../../../shared/infrastructure/db.js'
-import { projects, features } from '../../../drizzle/schema/index.js'
+import { projects, features } from '#schema'
 import { slugify } from '../../auth/application/auth.helpers.js'
 import { NotFoundError, ConflictError } from '../../../shared/errors/app-errors.js'
 
 export async function listProjectsUseCase(organisationId: string) {
   return db
     .select({
-      id:          projects.id,
-      name:        projects.name,
-      slug:        projects.slug,
+      id: projects.id,
+      name: projects.name,
+      slug: projects.slug,
       environment: projects.environment,
-      createdAt:   projects.createdAt,
+      createdAt: projects.createdAt,
     })
     .from(projects)
     .where(and(eq(projects.organisationId, organisationId), isNull(projects.deletedAt)))
@@ -76,13 +76,14 @@ export async function listFeaturesWithCostUseCase(
   // Verify project belongs to org first
   await getProjectUseCase(organisationId, projectId)
 
-  const rows = await db.execute<{
-    id:         string
-    key:        string
-    name:       string
+  const result = await db.execute<{
+    id: string
+    key: string
+    name: string
     cost_micro: string
-    requests:   string
-    tokens:     string
+    requests: string
+    tokens: string
+    [key: string]: unknown
   }>(sql`
     SELECT
       f.id,
@@ -101,12 +102,12 @@ export async function listFeaturesWithCostUseCase(
     ORDER BY SUM(lr.cost_total_micro) DESC NULLS LAST
   `)
 
-  return rows.map((r) => ({
-    id:        r.id,
-    key:       r.key,
-    name:      r.name,
+  return result.rows.map((r) => ({
+    id: r.id,
+    key: r.key,
+    name: r.name,
     costMicro: Number(r.cost_micro),
-    requests:  Number(r.requests),
-    tokens:    Number(r.tokens),
+    requests: Number(r.requests),
+    tokens: Number(r.tokens),
   }))
 }
