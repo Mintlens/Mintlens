@@ -1,12 +1,12 @@
 import type { FastifyRequest, FastifyReply } from 'fastify'
-import type { ZodSchema } from 'zod'
+import { type ZodTypeAny } from 'zod'
 import { ValidationError } from '../errors/app-errors.js'
 
 /**
  * Factory that returns a preHandler hook which validates req.body
  * against a Zod schema and replaces it with the parsed/coerced value.
  */
-export function validateBody<T>(schema: ZodSchema<T>) {
+export function validateBody(schema: ZodTypeAny) {
   return async (req: FastifyRequest, _reply: FastifyReply) => {
     const result = schema.safeParse(req.body)
     if (!result.success) {

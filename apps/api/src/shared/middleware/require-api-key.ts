@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import type { FastifyRequest, FastifyReply } from 'fastify'
 import { eq, and, isNull } from 'drizzle-orm'
 import { db } from '../infrastructure/db.js'
-import { apiKeys, projects } from '../../drizzle/schema/index.js'
+import { apiKeys, projects } from '#schema'
 import { AuthError } from '../errors/app-errors.js'
 
 declare module 'fastify' {
@@ -31,12 +31,12 @@ export async function requireApiKey(req: FastifyRequest, _reply: FastifyReply) {
 
   const [row] = await db
     .select({
-      id:             apiKeys.id,
-      projectId:      apiKeys.projectId,
+      id: apiKeys.id,
+      projectId: apiKeys.projectId,
       organisationId: projects.organisationId,
-      scopes:         apiKeys.scopes,
-      revokedAt:      apiKeys.revokedAt,
-      expiresAt:      apiKeys.expiresAt,
+      scopes: apiKeys.scopes,
+      revokedAt: apiKeys.revokedAt,
+      expiresAt: apiKeys.expiresAt,
     })
     .from(apiKeys)
     .innerJoin(projects, eq(apiKeys.projectId, projects.id))
@@ -59,9 +59,9 @@ export async function requireApiKey(req: FastifyRequest, _reply: FastifyReply) {
     .catch(() => undefined)
 
   req.apiKey = {
-    keyId:          row.id,
-    projectId:      row.projectId,
+    keyId: row.id,
+    projectId: row.projectId,
     organisationId: row.organisationId,
-    scopes:         row.scopes,
+    scopes: row.scopes,
   }
 }
