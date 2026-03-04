@@ -11,6 +11,7 @@ type TenantRow = {
   requests:                 string
   tokens:                   string
   last_seen_at:             string | null
+  [key: string]: unknown
 }
 
 export async function getTenantsOverviewUseCase(
@@ -41,7 +42,7 @@ export async function getTenantsOverviewUseCase(
     LIMIT ${limit} OFFSET ${offset}
   `)
 
-  return (rows as TenantRow[]).map((r) => {
+  return rows.rows.map((r) => {
     const cost    = Number(r.cost_micro)
     const revenue = Number(r.revenue_estimated_micro)
     const grossMargin = revenue > 0 ? (revenue - cost) / revenue : null

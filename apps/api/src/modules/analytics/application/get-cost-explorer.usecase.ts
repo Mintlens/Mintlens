@@ -118,27 +118,32 @@ export async function getCostExplorerUseCase(f: CostExplorerFilters): Promise<Co
     ORDER BY SUM(cost_total_micro) DESC
   `
 
-  const [tsRows, modelRows, featureRows, providerRows] = await Promise.all([
+  const [tsResult, modelResult, featureResult, providerResult] = await Promise.all([
     db.execute<TimeSeriesRow>(tsSql),
     db.execute<DimensionRow>(byModelSql),
     db.execute<DimensionRow>(byFeatureSql),
     db.execute<DimensionRow>(byProviderSql),
   ])
 
-  const totalCostMicro = (tsRows as TimeSeriesRow[]).reduce((acc, r) => acc + Number(r.cost_micro), 0)
-  const totalTokens    = (tsRows as TimeSeriesRow[]).reduce((acc, r) => acc + Number(r.tokens), 0)
-  const totalRequests  = (tsRows as TimeSeriesRow[]).reduce((acc, r) => acc + Number(r.requests), 0)
+  const tsRows       = tsResult.rows
+  const modelRows    = modelResult.rows
+  const featureRows  = featureResult.rows
+  const providerRows = providerResult.rows
+
+  const totalCostMicro = tsRows.reduce((acc, r) => acc + Number(r.cost_micro), 0)
+  const totalTokens    = tsRows.reduce((acc, r) => acc + Number(r.tokens), 0)
+  const totalRequests  = tsRows.reduce((acc, r) => acc + Number(r.requests), 0)
 
   return {
-    timeSeries: (tsRows as TimeSeriesRow[]).map((r) => ({
+    timeSeries: tsRows.map((r) => ({
       date:      r.bucket,
       costMicro: Number(r.cost_micro),
       tokens:    Number(r.tokens),
       requests:  Number(r.requests),
     })),
-    byModel:    toDimensions(modelRows as DimensionRow[], totalCostMicro),
-    byFeature:  toDimensions(featureRows as DimensionRow[], totalCostMicro),
-    byProvider: toDimensions(providerRows as DimensionRow[], totalCostMicro),
+    byModel:    toDimensions(modelRows, totalCostMicro),
+    byFeature:  toDimensions(featureRows, totalCostMicro),
+    byProvider: toDimensions(providerRows, totalCostMicro),
     totalCostMicro,
     totalTokens,
     totalRequests,
