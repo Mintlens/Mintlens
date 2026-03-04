@@ -5,7 +5,7 @@
     "baseUrl": ".",
     "paths": {
       "#schema": [
-        "./drizzle/schema/index.ts"
+        "./drizzle/schema.ts"
       ],
       "@mintlens/shared": [
         "../../packages/shared/src/index.ts"
