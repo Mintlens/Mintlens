@@ -4,7 +4,7 @@
  */
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
-import * as schema from '../../drizzle/schema/index.js'
+import * as schema from '#schema'
 import { logger } from '../logger/logger.js'
 
 const pool = new Pool({

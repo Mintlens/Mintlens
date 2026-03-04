@@ -1,11 +1,12 @@
 import pino from 'pino'
 
+const isDev = process.env['NODE_ENV'] === 'development'
+
 export const logger = pino({
   level: process.env['LOG_LEVEL'] ?? 'info',
-  transport:
-    process.env['NODE_ENV'] === 'development'
-      ? { target: 'pino-pretty', options: { colorize: true, translateTime: 'HH:MM:ss' } }
-      : undefined,
+  ...(isDev
+    ? { transport: { target: 'pino-pretty', options: { colorize: true, translateTime: 'HH:MM:ss' } } }
+    : {}),
   redact: {
     paths: [
       'req.headers.authorization',
