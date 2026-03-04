@@ -65,7 +65,13 @@ export async function authRoutes(app: FastifyInstance) {
     { preHandler: [requireAuth, validateBody(generateApiKeyBody)] },
     async (req, reply) => {
       const { organisationId } = req.user!
-      const result = await generateApiKeyUseCase(organisationId, req.body)
+      const body = req.body
+      const result = await generateApiKeyUseCase(organisationId, {
+        projectId: body.projectId,
+        name:      body.name,
+        ...(body.scopes    !== undefined ? { scopes:    body.scopes }    : {}),
+        ...(body.expiresAt !== undefined ? { expiresAt: body.expiresAt } : {}),
+      })
 
       // rawKey shown ONCE — never retrievable again
       return reply.status(201).send({
