@@ -13,13 +13,22 @@ import { Worker } from 'bullmq'
 import { eq, and } from 'drizzle-orm'
 import { redis } from '../../../shared/infrastructure/redis.js'
 import { db } from '../../../shared/infrastructure/db.js'
-import { llmRequests, features, tenants, projects } from '../../../drizzle/schema/index.js'
+import { llmRequests, features, tenants, projects } from '#schema'
 import { logger } from '../../../shared/logger/logger.js'
 import { calculateCostMicro } from './cost-calculator.js'
 import type { LlmEventJob } from '../infrastructure/ingestion.queue.js'
 import { LLM_EVENTS_QUEUE } from '../infrastructure/ingestion.queue.js'
 
 export function startLlmEventsWorker() {
+  const redisUrl = process.env['REDIS_URL'] ?? 'redis://localhost:6379'
+  const parsedUrl = new URL(redisUrl)
+  const connection = {
+    host: parsedUrl.hostname,
+    port: Number(parsedUrl.port) || 6379,
+    password: parsedUrl.password || undefined,
+    db: parsedUrl.pathname ? Number(parsedUrl.pathname.slice(1)) || 0 : 0,
+  }
+
   const worker = new Worker<LlmEventJob>(
     LLM_EVENTS_QUEUE,
     async (job) => {
@@ -85,21 +94,21 @@ export function startLlmEventsWorker() {
       // 5. Write to DB
       await db.insert(llmRequests).values({
         projectId,
-        tenantId,
-        featureId,
-        userId:      event.user_id,
-        provider:    event.provider,
-        model:       event.model,
-        requestRef:  event.request_ref,
-        tokensInput:  event.tokens_input,
+        tenantId: tenantId ?? null,
+        featureId: featureId ?? null,
+        userId: event.user_id ?? null,
+        provider: event.provider,
+        model: event.model,
+        requestRef: event.request_ref ?? null,
+        tokensInput: event.tokens_input,
         tokensOutput: event.tokens_output,
         tokensTotal,
         costProviderMicro: costMicro,
-        costTotalMicro:    costMicro,
-        latencyMs:   event.latency_ms,
+        costTotalMicro: costMicro,
+        latencyMs: event.latency_ms ?? null,
         environment: event.environment ?? 'production',
-        sdkVersion:  event.sdk_version,
-        tags:        event.tags,
+        sdkVersion: event.sdk_version ?? null,
+        tags: event.tags ?? null,
       })
 
       // 6. Increment budget counters atomically in Redis
@@ -127,7 +136,7 @@ export function startLlmEventsWorker() {
       }
     },
     {
-      connection: redis,
+      connection,
       concurrency: 20,
     },
   )
