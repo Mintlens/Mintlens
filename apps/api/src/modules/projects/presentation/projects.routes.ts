@@ -41,7 +41,10 @@ export async function projectsRoutes(app: FastifyInstance) {
   app.post('/', { preHandler: [requireAuth] }, async (req, reply) => {
     const { organisationId } = req.user!
     const body = createProjectBody.parse(req.body)
-    const project = await createProjectUseCase(organisationId, body)
+    const project = await createProjectUseCase(organisationId, {
+      name: body.name,
+      ...(body.environment !== undefined ? { environment: body.environment } : {}),
+    })
     return reply.status(201).send({ data: project })
   })
 
