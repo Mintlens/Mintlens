@@ -17,25 +17,32 @@ type DimensionRow = {
   requests:  string
 }
 
-/** Builds the WHERE clause conditions common to all queries in this use case */
-function buildConditions(f: CostExplorerFilters): SQL[] {
+/**
+ * Builds WHERE clause conditions for queries on `llm_requests`.
+ * @param tableAlias - optional alias (e.g. 'lr') used when the query joins
+ *                     other tables that share column names like `project_id`.
+ */
+function buildConditions(f: CostExplorerFilters, tableAlias?: string): SQL[] {
+  const col = (name: string) =>
+    tableAlias ? sql.raw(`${tableAlias}.${name}`) : sql.raw(name)
+
   const conds: SQL[] = [
-    sql`project_id  = ${f.projectId}::uuid`,
-    sql`created_at >= ${f.from.toISOString()}`,
-    sql`created_at <  ${f.to.toISOString()}`,
+    sql`${col('project_id')}  = ${f.projectId}::uuid`,
+    sql`${col('created_at')} >= ${f.from.toISOString()}`,
+    sql`${col('created_at')} <  ${f.to.toISOString()}`,
   ]
-  if (f.provider)    conds.push(sql`provider    = ${f.provider}`)
-  if (f.model)       conds.push(sql`model ILIKE ${'%' + f.model + '%'}`)
-  if (f.environment) conds.push(sql`environment = ${f.environment}`)
+  if (f.provider)    conds.push(sql`${col('provider')}    = ${f.provider}`)
+  if (f.model)       conds.push(sql`${col('model')} ILIKE ${'%' + f.model + '%'}`)
+  if (f.environment) conds.push(sql`${col('environment')} = ${f.environment}`)
   if (f.featureKey) {
-    conds.push(sql`feature_id = (
+    conds.push(sql`${col('feature_id')} = (
       SELECT id FROM features
       WHERE project_id = ${f.projectId}::uuid AND key = ${f.featureKey}
       LIMIT 1
     )`)
   }
   if (f.tenantId) {
-    conds.push(sql`tenant_id = ${f.tenantId}::uuid`)
+    conds.push(sql`${col('tenant_id')} = ${f.tenantId}::uuid`)
   }
   return conds
 }
@@ -56,8 +63,10 @@ function toDimensions(rows: DimensionRow[], totalCost: number): CostByDimension[
 }
 
 export async function getCostExplorerUseCase(f: CostExplorerFilters): Promise<CostExplorerResult> {
-  const conds = buildConditions(f)
-  const where = sql.join(conds, sql` AND `)
+  const conds        = buildConditions(f)
+  const condsAliased = buildConditions(f, 'lr')
+  const where        = sql.join(conds, sql` AND `)
+  const whereAliased = sql.join(condsAliased, sql` AND `)
   const trunc = granularityTrunc(f.granularity)
 
   // 1. Time series
@@ -98,7 +107,7 @@ export async function getCostExplorerUseCase(f: CostExplorerFilters): Promise<Co
       COUNT(*)::text                                 AS requests
     FROM llm_requests lr
     LEFT JOIN features f ON lr.feature_id = f.id
-    WHERE ${where}
+    WHERE ${whereAliased}
     GROUP BY f.key, f.name
     ORDER BY SUM(lr.cost_total_micro) DESC
     LIMIT 20
