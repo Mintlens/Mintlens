@@ -7,14 +7,15 @@
   "main": "dist/app.js",
   "scripts": {
     "build": "tsc --project tsconfig.build.json && tsc-alias --project tsconfig.build.json",
-    "dev": "tsx watch src/app.ts",
-    "start": "node dist/app.js",
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ci": "vitest run --coverage",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "clean": "rimraf dist",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
@@ -54,6 +55,7 @@
     "tsc-alias": "^1.8.16",
     "tsx": "^4.19.2",
     "typescript": "^5.6.2",
+    "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^2.1.1"
   }
 }

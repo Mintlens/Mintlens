@@ -1,5 +1,7 @@
 import Fastify from 'fastify'
+import { ZodError } from 'zod'
 import { logger } from './shared/logger/logger.js'
+import { AppError } from './shared/errors/app-errors.js'
 
 export async function buildApp() {
   const app = Fastify({
@@ -8,6 +10,41 @@ export async function buildApp() {
     requestIdLogLabel: 'requestId',
     genReqId: () => crypto.randomUUID(),
     trustProxy: true,
+  })
+
+  // ── Global error handler ──────────────────────────────────────
+  // Registered first so it applies to all plugin sub-scopes (Fastify v4 scoping).
+  app.setErrorHandler((error, _request, reply) => {
+    // Domain errors (ConflictError, AuthError, NotFoundError, …)
+    if (error instanceof AppError && error.isOperational) {
+      logger.warn({ err: error, code: error.code }, error.message)
+      return reply.status(error.statusCode).send({
+        error: { code: error.code, message: error.message },
+      })
+    }
+
+    // Zod validation errors thrown from route handlers (inline .parse() calls)
+    if (error instanceof ZodError) {
+      const first = error.errors[0]
+      return reply.status(400).send({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: first ? `${first.path.join('.')}: ${first.message}` : 'Validation error',
+        },
+      })
+    }
+
+    // Fastify's built-in schema validation errors
+    if (error.validation) {
+      return reply.status(400).send({
+        error: { code: 'VALIDATION_ERROR', message: error.message },
+      })
+    }
+
+    logger.error({ err: error }, 'Unexpected error')
+    return reply.status(500).send({
+      error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' },
+    })
   })
 
   // ── Plugins ───────────────────────────────────────────────────
@@ -54,59 +91,13 @@ export async function buildApp() {
   const { ingestionRoutes }  = await import('./modules/ingestion/presentation/ingestion.routes.js')
   const { analyticsRoutes }  = await import('./modules/analytics/presentation/analytics.routes.js')
   const { projectsRoutes }   = await import('./modules/projects/presentation/projects.routes.js')
+  const { budgetsRoutes }    = await import('./modules/budgets/presentation/budgets.routes.js')
 
   await app.register(authRoutes,      { prefix: '/v1/auth' })
   await app.register(ingestionRoutes, { prefix: '/v1/events' })
   await app.register(analyticsRoutes, { prefix: '/v1/analytics' })
   await app.register(projectsRoutes,  { prefix: '/v1/projects' })
-
-  // ── Global error handler ──────────────────────────────────────
-  const { AppError } = await import('./shared/errors/app-errors.js')
-
-  app.setErrorHandler((error, _request, reply) => {
-    if (error instanceof AppError && error.isOperational) {
-      logger.warn({ err: error, code: error.code }, error.message)
-      return reply.status(error.statusCode).send({
-        error: { code: error.code, message: error.message },
-      })
-    }
-
-    // Zod / Fastify validation errors
-    if (error.validation) {
-      return reply.status(400).send({
-        error: { code: 'VALIDATION_ERROR', message: error.message },
-      })
-    }
-
-    logger.error({ err: error }, 'Unexpected error')
-    return reply.status(500).send({
-      error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' },
-    })
-  })
+  await app.register(budgetsRoutes,   { prefix: '/v1/budgets' })
 
   return app
 }
-
-// ── Bootstrap ────────────────────────────────────────────────────
-async function main() {
-  try {
-    const app = await buildApp()
-    const port = Number(process.env['API_PORT'] ?? 3001)
-    const host = process.env['API_HOST'] ?? '0.0.0.0'
-
-    // Start BullMQ worker (runs in same process for simplicity; split to separate
-    // Dockerfile target in production if queue throughput requires it)
-    const { startLlmEventsWorker } = await import(
-      './modules/ingestion/application/process-llm-event.worker.js'
-    )
-    startLlmEventsWorker()
-
-    await app.listen({ port, host })
-    logger.info({ port, host }, '🔭 Mintlens API running')
-  } catch (err) {
-    logger.error({ err }, 'Failed to start server')
-    process.exit(1)
-  }
-}
-
-main()
