@@ -77,7 +77,7 @@ export function startLlmEventsWorker() {
 
       // 3. Calculate cost
       const tokensTotal = event.tokens_input + event.tokens_output
-      const costMicro = calculateCostMicro(event.provider, event.model, event.tokens_input, event.tokens_output)
+      const costMicro = await calculateCostMicro(event.provider, event.model, event.tokens_input, event.tokens_output)
 
       // 4. Check kill-switch (non-blocking: if Redis is down, allow the write)
       const killKey = `kill:project:${projectId}`

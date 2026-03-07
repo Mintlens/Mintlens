@@ -1,4 +1,5 @@
 import type { MintlensClient, TrackingContext } from '../client/mintlens-client.js'
+import type { LlmProvider } from '@mintlens/shared'
 
 /**
  * Wraps the OpenAI SDK client to automatically track usage.
@@ -17,7 +18,12 @@ import type { MintlensClient, TrackingContext } from '../client/mintlens-client.
  * })
  * ```
  */
-export function wrapOpenAI<T extends OpenAILike>(client: T, mintlens: MintlensClient, defaultContext?: TrackingContext): T {
+export function wrapOpenAI<T extends OpenAILike>(
+  client: T,
+  mintlens: MintlensClient,
+  defaultContext?: TrackingContext,
+  provider: LlmProvider = 'openai',
+): T {
   return new Proxy(client, {
     get(target, prop) {
       if (prop === 'chat') {
@@ -31,6 +37,7 @@ export function wrapOpenAI<T extends OpenAILike>(client: T, mintlens: MintlensCl
                       completionsTarget.create.bind(completionsTarget),
                       mintlens,
                       defaultContext,
+                      provider,
                     )
                   }
                   return Reflect.get(completionsTarget, completionsProp)
@@ -50,6 +57,7 @@ function createTrackedChatCompletion(
   originalCreate: (...args: unknown[]) => Promise<unknown>,
   mintlens: MintlensClient,
   defaultContext?: TrackingContext,
+  provider: LlmProvider = 'openai',
 ) {
   return async function trackedCreate(
     params: OpenAIChatCompletionParams & { mintlens?: TrackingContext },
@@ -65,7 +73,7 @@ function createTrackedChatCompletion(
     const usage = response?.usage
     if (usage) {
       mintlens.track({
-        provider: 'openai',
+        provider,
         model: params.model,
         tokensInput: usage.prompt_tokens ?? 0,
         tokensOutput: usage.completion_tokens ?? 0,

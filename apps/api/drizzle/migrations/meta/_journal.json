@@ -8,6 +8,13 @@
       "when": 1772641796889,
       "tag": "0000_living_chronomancer",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772832822407,
+      "tag": "0001_sour_nemesis",
+      "breakpoints": true
     }
   ]
 }

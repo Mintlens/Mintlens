@@ -26,8 +26,13 @@
 export { MintlensClient, buildEventPayload } from './client/mintlens-client.js'
 export type { MintlensClientOptions, TrackingContext } from './client/mintlens-client.js'
 
-export { wrapOpenAI } from './wrappers/openai.wrapper.js'
+export { wrapOpenAI }    from './wrappers/openai.wrapper.js'
 export { wrapAnthropic } from './wrappers/anthropic.wrapper.js'
+export { wrapGemini }    from './wrappers/gemini.wrapper.js'
+export { wrapMistral }   from './wrappers/mistral.wrapper.js'
+export { wrapCohere }    from './wrappers/cohere.wrapper.js'
+export { wrapGroq }      from './wrappers/groq.wrapper.js'
+export { wrapDeepSeek }  from './wrappers/deepseek.wrapper.js'
 
 export { calculateCostMicro, microToUsd } from './utils/cost-calculator.js'
 
