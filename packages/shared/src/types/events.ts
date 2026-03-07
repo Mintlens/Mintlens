@@ -3,7 +3,21 @@
  * These types are shared between the SDKs and the API.
  */
 
-export type LlmProvider = 'openai' | 'anthropic' | 'google' | 'mistral' | 'cohere' | 'other'
+export type LlmProvider =
+  | 'openai'
+  | 'anthropic'
+  | 'google'
+  | 'mistral'
+  | 'cohere'
+  | 'xai'
+  | 'groq'
+  | 'together_ai'
+  | 'deepseek'
+  | 'perplexity'
+  | 'kimi'
+  | 'bedrock'
+  | 'ollama'
+  | 'other'
 
 export type Environment = 'production' | 'staging' | 'development'
 

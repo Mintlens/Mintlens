@@ -161,7 +161,7 @@ export function buildEventPayload(
     model,
     tokensInput,
     tokensOutput,
-    latencyMs,
+    ...(latencyMs !== undefined ? { latencyMs } : {}),
     ...context,
   }
 }

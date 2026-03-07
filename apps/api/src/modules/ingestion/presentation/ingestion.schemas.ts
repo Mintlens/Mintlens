@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const llmUsageEventSchema = z.object({
-  provider:    z.enum(['openai', 'anthropic', 'google', 'mistral', 'cohere', 'other']),
+  provider:    z.enum(['openai', 'anthropic', 'google', 'mistral', 'cohere', 'xai', 'groq', 'together_ai', 'deepseek', 'perplexity', 'kimi', 'bedrock', 'ollama', 'other']),
   model:       z.string().min(1).max(120),
   /** Opaque ID issued by the provider (for deduplication) */
   request_ref: z.string().max(256).optional(),

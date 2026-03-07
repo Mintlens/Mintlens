@@ -25,6 +25,11 @@ async function main() {
     )
     startBudgetCheckerWorker()
 
+    const { startModelPricingSyncWorker } = await import(
+      './modules/ingestion/application/sync-model-pricing.worker.js'
+    )
+    startModelPricingSyncWorker()
+
     await app.listen({ port, host })
     logger.info({ port, host }, '🔭 Mintlens API running')
   } catch (err) {

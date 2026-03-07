@@ -32,6 +32,13 @@ export const llmProviderEnum = pgEnum('llm_provider', [
     'mistral',
     'cohere',
     'xai',
+    'groq',
+    'together_ai',
+    'deepseek',
+    'perplexity',
+    'kimi',
+    'bedrock',
+    'ollama',
     'other',
 ])
 
@@ -326,3 +333,32 @@ export const budgetAlerts = pgTable(
 
 export type BudgetAlert = typeof budgetAlerts.$inferSelect
 export type NewBudgetAlert = typeof budgetAlerts.$inferInsert
+
+// ────────────────────────────────────────────────────────────────
+// Model Pricing  (synced daily from LiteLLM price list)
+// ────────────────────────────────────────────────────────────────
+
+export const modelPricing = pgTable(
+    'model_pricing',
+    {
+        id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+        /** Provider identifier (e.g. 'openai', 'groq') */
+        provider: text('provider').notNull(),
+        /** Exact model key as used in LiteLLM (e.g. 'groq/llama-3.3-70b-versatile') */
+        model: text('model').notNull(),
+        /** Cost in microdollars per input token (1 USD = 1 000 000 µ$) */
+        inputMicroPerToken: integer('input_micro_per_token').notNull(),
+        /** Cost in microdollars per output token */
+        outputMicroPerToken: integer('output_micro_per_token').notNull(),
+        /** Max context window in tokens (informational) */
+        contextWindow: integer('context_window'),
+        updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    },
+    (t) => [
+        unique('model_pricing_model_unique').on(t.model),
+        index('model_pricing_provider_idx').on(t.provider),
+    ],
+)
+
+export type ModelPricing = typeof modelPricing.$inferSelect
+export type NewModelPricing = typeof modelPricing.$inferInsert
