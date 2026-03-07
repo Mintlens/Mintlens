@@ -34,7 +34,5 @@ export { wrapCohere }    from './wrappers/cohere.wrapper.js'
 export { wrapGroq }      from './wrappers/groq.wrapper.js'
 export { wrapDeepSeek }  from './wrappers/deepseek.wrapper.js'
 
-export { calculateCostMicro, microToUsd } from './utils/cost-calculator.js'
-
 // Re-export shared types for convenience
 export type { LlmUsageEventPayload, LlmProvider, Environment } from '@mintlens/shared'
