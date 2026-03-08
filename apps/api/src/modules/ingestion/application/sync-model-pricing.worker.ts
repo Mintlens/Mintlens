@@ -50,10 +50,24 @@ function extractProvider(modelKey: string, entry: LiteLLMEntry): string {
 export async function runModelPricingSync(): Promise<void> {
   logger.info('Model pricing sync started')
 
-  const res = await fetch(LITELLM_PRICE_URL)
+  const MAX_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
+  const res = await fetch(LITELLM_PRICE_URL, { signal: AbortSignal.timeout(30_000) })
   if (!res.ok) throw new Error(`LiteLLM fetch failed: ${res.status} ${res.statusText}`)
 
-  const data = (await res.json()) as Record<string, LiteLLMEntry>
+  const contentLength = res.headers.get('content-length')
+  if (contentLength && Number(contentLength) > MAX_SIZE_BYTES) {
+    throw new Error(`LiteLLM response too large: ${contentLength} bytes`)
+  }
+
+  const contentType = res.headers.get('content-type') ?? ''
+  if (!contentType.includes('application/json') && !contentType.includes('text/plain')) {
+    throw new Error(`Unexpected LiteLLM content-type: ${contentType}`)
+  }
+
+  const text = await res.text()
+  if (text.length > MAX_SIZE_BYTES) throw new Error('LiteLLM response body exceeds 5 MB limit')
+
+  const data = JSON.parse(text) as Record<string, LiteLLMEntry>
   const entries: Array<typeof modelPricing.$inferInsert> = []
 
   for (const [modelKey, entry] of Object.entries(data)) {
