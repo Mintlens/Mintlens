@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify'
-import { requireApiKey } from '../../../shared/middleware/require-api-key.js'
+import { requireApiKey, requireScope } from '../../../shared/middleware/require-api-key.js'
 import { validateBody } from '../../../shared/middleware/validate-body.js'
 import { ingestBatchBody, type IngestBatchBody } from './ingestion.schemas.js'
 import { llmEventsQueue } from '../infrastructure/ingestion.queue.js'
@@ -20,7 +20,7 @@ export async function ingestionRoutes(app: FastifyInstance) {
         summary: 'Ingest a batch of LLM usage events',
         security: [{ apiKeyAuth: [] }],
       },
-      preHandler: [requireApiKey, validateBody(ingestBatchBody)],
+      preHandler: [requireApiKey, requireScope('ingest'), validateBody(ingestBatchBody)],
       config: { rateLimit: { max: 500, timeWindow: '1 minute' } },
     },
     async (req, reply) => {

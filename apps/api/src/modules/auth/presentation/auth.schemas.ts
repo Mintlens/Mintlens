@@ -16,7 +16,7 @@ export const loginBody = z.object({
 export const generateApiKeyBody = z.object({
   projectId: z.string().uuid(),
   name:      z.string().min(1).max(100),
-  scopes:    z.array(z.string()).optional(),
+  scopes:    z.array(z.enum(['ingest', 'read'])).optional(),
   expiresAt: z.string().datetime().optional().transform((v) => (v ? new Date(v) : undefined)),
 })
 
