@@ -3,7 +3,7 @@ import type { FastifyRequest, FastifyReply } from 'fastify'
 import { eq, and, isNull } from 'drizzle-orm'
 import { db } from '../infrastructure/db.js'
 import { apiKeys, projects } from '#schema'
-import { AuthError } from '../errors/app-errors.js'
+import { AuthError, ForbiddenError } from '../errors/app-errors.js'
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -63,5 +63,17 @@ export async function requireApiKey(req: FastifyRequest, _reply: FastifyReply) {
     projectId: row.projectId,
     organisationId: row.organisationId,
     scopes: row.scopes,
+  }
+}
+
+/**
+ * preHandler hook that asserts the authenticated API key has the given scope.
+ * Must be used after requireApiKey in the preHandler chain.
+ */
+export function requireScope(scope: string) {
+  return async (req: FastifyRequest, _reply: FastifyReply) => {
+    if (!req.apiKey?.scopes.includes(scope)) {
+      throw new ForbiddenError(`API key missing required scope: ${scope}`)
+    }
   }
 }
