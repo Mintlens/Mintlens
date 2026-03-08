@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'node:crypto'
+import { createHmac, randomBytes } from 'node:crypto'
 import { eq, and, isNull } from 'drizzle-orm'
 import { db } from '../../../shared/infrastructure/db.js'
 import { apiKeys, projects } from '#schema'
@@ -7,6 +7,19 @@ import type { GenerateApiKeyInput, GeneratedApiKey } from '../domain/auth.types.
 
 const KEY_PREFIX_STR = 'sk_live_'
 const KEY_BYTES = 32
+
+const API_KEY_SALT = process.env['API_KEY_SALT']
+if (!API_KEY_SALT) {
+  if (process.env['NODE_ENV'] === 'production') {
+    throw new Error('API_KEY_SALT env var is required in production')
+  }
+}
+const _salt = API_KEY_SALT ?? 'dev-salt-change-in-production'
+
+/** HMAC-SHA256(rawKey, API_KEY_SALT) — the only value ever stored */
+export function hashApiKey(rawKey: string): string {
+  return createHmac('sha256', _salt).update(rawKey).digest('hex')
+}
 
 export async function generateApiKeyUseCase(
   organisationId: string,
@@ -28,8 +41,8 @@ export async function generateApiKeyUseCase(
   const rawKey = `${KEY_PREFIX_STR}${rawSecret}`
   const keyPrefix = rawKey.slice(0, 16)
 
-  // SHA-256 hash — only this is stored
-  const keyHash = createHash('sha256').update(rawKey).digest('hex')
+  // HMAC-SHA256(rawKey, API_KEY_SALT) — only this is stored
+  const keyHash = hashApiKey(rawKey)
 
   const [created] = await db
     .insert(apiKeys)
