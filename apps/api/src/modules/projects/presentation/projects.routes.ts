@@ -8,6 +8,8 @@ import {
   listFeaturesWithCostUseCase,
 } from '../application/projects.usecase.js'
 
+const projectParams = z.object({ projectId: z.string().uuid() })
+
 const createProjectBody = z.object({
   name:        z.string().min(2).max(100),
   environment: z.enum(['production', 'staging', 'development']).optional(),
@@ -65,7 +67,7 @@ export async function projectsRoutes(app: FastifyInstance) {
   app.get<{ Params: { projectId: string } }>(
     '/:projectId',
     {
-      schema: { tags: ['Projects'], summary: 'Get a project', security: [{ cookieAuth: [] }] },
+      schema: { params: projectParams, tags: ['Projects'], summary: 'Get a project', security: [{ cookieAuth: [] }] },
       preHandler: [requireAuth],
     },
     async (req, reply) => {
@@ -82,7 +84,7 @@ export async function projectsRoutes(app: FastifyInstance) {
   app.get<{ Params: { projectId: string } }>(
     '/:projectId/features',
     {
-      schema: { tags: ['Projects'], summary: 'List features with cost', security: [{ cookieAuth: [] }] },
+      schema: { params: projectParams, tags: ['Projects'], summary: 'List features with cost', security: [{ cookieAuth: [] }] },
       preHandler: [requireAuth],
     },
     async (req, reply) => {

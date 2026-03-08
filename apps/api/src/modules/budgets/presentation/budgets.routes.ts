@@ -1,9 +1,12 @@
+import { z } from 'zod'
 import type { FastifyInstance } from 'fastify'
 import { requireAuth } from '../../../shared/middleware/require-auth.js'
 import { validateBody } from '../../../shared/middleware/validate-body.js'
 import { createBudgetBody, listBudgetsQuery, type CreateBudgetBody } from './budgets.schemas.js'
 import { createBudgetUseCase } from '../application/create-budget.usecase.js'
 import { listBudgetsUseCase, deleteBudgetUseCase } from '../application/list-budgets.usecase.js'
+
+const budgetParams = z.object({ budgetId: z.string().uuid() })
 
 export async function budgetsRoutes(app: FastifyInstance) {
   // CSRF protection applies to all routes in this plugin scope
@@ -59,7 +62,7 @@ export async function budgetsRoutes(app: FastifyInstance) {
   app.delete<{ Params: { budgetId: string } }>(
     '/:budgetId',
     {
-      schema: { tags: ['Budgets'], summary: 'Deactivate a budget', security: [{ cookieAuth: [] }] },
+      schema: { params: budgetParams, tags: ['Budgets'], summary: 'Deactivate a budget', security: [{ cookieAuth: [] }] },
       preHandler: [requireAuth],
     },
     async (req, reply) => {
