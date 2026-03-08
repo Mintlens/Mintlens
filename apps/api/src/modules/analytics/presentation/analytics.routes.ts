@@ -10,6 +10,10 @@ import { microToUsd } from '../../ingestion/application/cost-calculator.js'
 const withProject = z.object({ projectId: z.string().uuid() })
 
 export async function analyticsRoutes(app: FastifyInstance) {
+  // CSRF protection applies to all routes in this plugin scope
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  app.addHook('onRequest', app.csrfProtection as any)
+
   /**
    * GET /v1/analytics/summary?projectId=&from=&to=
    * KPI cards: total cost, tokens, requests, avg latency, %-change vs prior period.

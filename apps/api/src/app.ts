@@ -103,6 +103,17 @@ export async function buildApp() {
 
   await app.register(cookie)
 
+  // ── CSRF protection ───────────────────────────────────────────
+  // Protects cookie-authenticated state-mutating endpoints against CSRF.
+  // Bearer-token routes (ingestion) are exempt — they carry their own credential.
+  const { default: csrfPlugin } = await import('@fastify/csrf-protection')
+  const csrfHmacKey = process.env['CSRF_HMAC_KEY'] ?? 'dev-csrf-key-change-in-production'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await app.register(csrfPlugin as any, {
+    sessionPlugin: '@fastify/cookie',
+    csrfOpts: { hmacKey: csrfHmacKey },
+  })
+
   await app.register(rateLimit, {
     global: true,
     max: 1000,

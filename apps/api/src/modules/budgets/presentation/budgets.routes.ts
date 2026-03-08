@@ -6,6 +6,10 @@ import { createBudgetUseCase } from '../application/create-budget.usecase.js'
 import { listBudgetsUseCase, deleteBudgetUseCase } from '../application/list-budgets.usecase.js'
 
 export async function budgetsRoutes(app: FastifyInstance) {
+  // CSRF protection applies to all routes in this plugin scope
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  app.addHook('onRequest', app.csrfProtection as any)
+
   /**
    * POST /v1/budgets
    * Creates a spend budget for a project (optionally scoped to tenant/feature).

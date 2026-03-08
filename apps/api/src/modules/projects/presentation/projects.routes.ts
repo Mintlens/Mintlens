@@ -24,6 +24,10 @@ const dateRangeQuery = z.object({
 })
 
 export async function projectsRoutes(app: FastifyInstance) {
+  // CSRF protection applies to all routes in this plugin scope
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  app.addHook('onRequest', app.csrfProtection as any)
+
   /**
    * GET /v1/projects
    * List all projects for the authenticated organisation.
