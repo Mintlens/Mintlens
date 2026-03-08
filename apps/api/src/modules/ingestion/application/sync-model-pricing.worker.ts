@@ -11,6 +11,7 @@
 import { Queue, Worker } from 'bullmq'
 import { sql } from 'drizzle-orm'
 import { db } from '../../../shared/infrastructure/db.js'
+import { getBullMQConnection } from '../../../shared/infrastructure/redis.js'
 import { modelPricing } from '#schema'
 import { logger } from '../../../shared/logger/logger.js'
 
@@ -118,14 +119,7 @@ export async function runModelPricingSync(): Promise<void> {
 }
 
 export function startModelPricingSyncWorker() {
-  const redisUrl = process.env['REDIS_URL'] ?? 'redis://localhost:6379'
-  const parsedUrl = new URL(redisUrl)
-  const connection = {
-    host: parsedUrl.hostname,
-    port: Number(parsedUrl.port) || 6379,
-    password: parsedUrl.password || undefined,
-    db: parsedUrl.pathname ? Number(parsedUrl.pathname.slice(1)) || 0 : 0,
-  }
+  const connection = getBullMQConnection()
 
   // Schedule repeatable job every 24 hours
   const queue = new Queue(QUEUE_NAME, { connection })
