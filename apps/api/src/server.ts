@@ -4,6 +4,9 @@
  * Kept separate from app.ts so that buildApp() can be imported in tests
  * without triggering server startup or BullMQ worker initialisation.
  */
+import { config } from 'dotenv'
+config() // loads apps/api/.env when present; no-op in production (env vars injected by platform)
+
 import { buildApp } from './app.js'
 import { logger } from './shared/logger/logger.js'
 

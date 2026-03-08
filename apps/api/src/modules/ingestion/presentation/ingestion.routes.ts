@@ -14,6 +14,12 @@ export async function ingestionRoutes(app: FastifyInstance) {
   app.post<{ Body: IngestBatchBody }>(
     '/llm-usage',
     {
+      schema: {
+        body: ingestBatchBody,
+        tags: ['Events'],
+        summary: 'Ingest a batch of LLM usage events',
+        security: [{ apiKeyAuth: [] }],
+      },
       preHandler: [requireApiKey, validateBody(ingestBatchBody)],
       config: { rateLimit: { max: 500, timeWindow: '1 minute' } },
     },

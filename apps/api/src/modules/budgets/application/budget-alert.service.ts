@@ -1,7 +1,12 @@
 import { Resend } from 'resend'
 import { logger } from '../../../shared/logger/logger.js'
 
-const resend = new Resend(process.env['RESEND_API_KEY'])
+// Lazy singleton — avoids crash at startup when RESEND_API_KEY is not set (e.g. local dev)
+let _resend: Resend | null = null
+function getResend(): Resend {
+  if (!_resend) _resend = new Resend(process.env['RESEND_API_KEY'])
+  return _resend
+}
 
 const FROM_EMAIL = process.env['ALERT_FROM_EMAIL'] ?? 'alerts@mintlens.io'
 
@@ -25,7 +30,7 @@ export async function sendBudgetAlertEmail(payload: BudgetAlertPayload): Promise
   const pct      = Math.round((payload.spentMicro / payload.limitMicro) * 100)
 
   try {
-    await resend.emails.send({
+    await getResend().emails.send({
       from:    FROM_EMAIL,
       to,
       subject: `[Mintlens] Budget alert — ${payload.budgetName} at ${pct}%`,

@@ -14,7 +14,10 @@ export async function analyticsRoutes(app: FastifyInstance) {
    * GET /v1/analytics/summary?projectId=&from=&to=
    * KPI cards: total cost, tokens, requests, avg latency, %-change vs prior period.
    */
-  app.get('/summary', { preHandler: [requireAuth] }, async (req, reply) => {
+  app.get('/summary', {
+    schema: { tags: ['Analytics'], summary: 'KPI summary (cost, tokens, requests, latency)', security: [{ cookieAuth: [] }] },
+    preHandler: [requireAuth],
+  }, async (req, reply) => {
     const q = withProject.merge(summaryQuery).parse(req.query)
 
     const rangeMs = q.to.getTime() - q.from.getTime()
@@ -34,7 +37,10 @@ export async function analyticsRoutes(app: FastifyInstance) {
    * GET /v1/analytics/cost-explorer?projectId=&from=&to=&granularity=day&...
    * Time series + breakdowns by model, feature, provider.
    */
-  app.get('/cost-explorer', { preHandler: [requireAuth] }, async (req, reply) => {
+  app.get('/cost-explorer', {
+    schema: { tags: ['Analytics'], summary: 'Cost time-series with breakdowns', security: [{ cookieAuth: [] }] },
+    preHandler: [requireAuth],
+  }, async (req, reply) => {
     const q = withProject.merge(costExplorerQuery).parse(req.query)
 
     const result = await getCostExplorerUseCase({
@@ -56,7 +62,10 @@ export async function analyticsRoutes(app: FastifyInstance) {
    * GET /v1/analytics/tenants?projectId=&from=&to=&limit=&offset=
    * Per-tenant: cost, estimated revenue, gross margin, last activity.
    */
-  app.get('/tenants', { preHandler: [requireAuth] }, async (req, reply) => {
+  app.get('/tenants', {
+    schema: { tags: ['Analytics'], summary: 'Per-tenant cost & revenue overview', security: [{ cookieAuth: [] }] },
+    preHandler: [requireAuth],
+  }, async (req, reply) => {
     const q = withProject.merge(tenantsOverviewQuery).parse(req.query)
 
     const tenants = await getTenantsOverviewUseCase(

@@ -12,7 +12,10 @@ export async function budgetsRoutes(app: FastifyInstance) {
    */
   app.post<{ Body: CreateBudgetBody }>(
     '/',
-    { preHandler: [requireAuth, validateBody(createBudgetBody)] },
+    {
+      schema: { body: createBudgetBody, tags: ['Budgets'], summary: 'Create a budget', security: [{ cookieAuth: [] }] },
+      preHandler: [requireAuth, validateBody(createBudgetBody)],
+    },
     async (req, reply) => {
       const { organisationId } = req.user!
       const body = req.body
@@ -35,7 +38,10 @@ export async function budgetsRoutes(app: FastifyInstance) {
    * GET /v1/budgets?projectId=
    * Lists all active budgets for a project with current spend from Redis.
    */
-  app.get('/', { preHandler: [requireAuth] }, async (req, reply) => {
+  app.get('/', {
+    schema: { tags: ['Budgets'], summary: 'List active budgets for a project', security: [{ cookieAuth: [] }] },
+    preHandler: [requireAuth],
+  }, async (req, reply) => {
     const { organisationId } = req.user!
     const q = listBudgetsQuery.parse(req.query)
     const budgets = await listBudgetsUseCase(organisationId, q.projectId)
@@ -48,7 +54,10 @@ export async function budgetsRoutes(app: FastifyInstance) {
    */
   app.delete<{ Params: { budgetId: string } }>(
     '/:budgetId',
-    { preHandler: [requireAuth] },
+    {
+      schema: { tags: ['Budgets'], summary: 'Deactivate a budget', security: [{ cookieAuth: [] }] },
+      preHandler: [requireAuth],
+    },
     async (req, reply) => {
       const { organisationId } = req.user!
       await deleteBudgetUseCase(organisationId, req.params.budgetId)

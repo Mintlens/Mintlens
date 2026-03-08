@@ -28,7 +28,10 @@ export async function projectsRoutes(app: FastifyInstance) {
    * GET /v1/projects
    * List all projects for the authenticated organisation.
    */
-  app.get('/', { preHandler: [requireAuth] }, async (req, reply) => {
+  app.get('/', {
+    schema: { tags: ['Projects'], summary: 'List projects', security: [{ cookieAuth: [] }] },
+    preHandler: [requireAuth],
+  }, async (req, reply) => {
     const { organisationId } = req.user!
     const list = await listProjectsUseCase(organisationId)
     return reply.send({ data: list })
@@ -38,7 +41,10 @@ export async function projectsRoutes(app: FastifyInstance) {
    * POST /v1/projects
    * Create a new project.
    */
-  app.post('/', { preHandler: [requireAuth] }, async (req, reply) => {
+  app.post('/', {
+    schema: { body: createProjectBody, tags: ['Projects'], summary: 'Create a project', security: [{ cookieAuth: [] }] },
+    preHandler: [requireAuth],
+  }, async (req, reply) => {
     const { organisationId } = req.user!
     const body = createProjectBody.parse(req.body)
     const project = await createProjectUseCase(organisationId, {
@@ -54,7 +60,10 @@ export async function projectsRoutes(app: FastifyInstance) {
    */
   app.get<{ Params: { projectId: string } }>(
     '/:projectId',
-    { preHandler: [requireAuth] },
+    {
+      schema: { tags: ['Projects'], summary: 'Get a project', security: [{ cookieAuth: [] }] },
+      preHandler: [requireAuth],
+    },
     async (req, reply) => {
       const { organisationId } = req.user!
       const project = await getProjectUseCase(organisationId, req.params.projectId)
@@ -68,7 +77,10 @@ export async function projectsRoutes(app: FastifyInstance) {
    */
   app.get<{ Params: { projectId: string } }>(
     '/:projectId/features',
-    { preHandler: [requireAuth] },
+    {
+      schema: { tags: ['Projects'], summary: 'List features with cost', security: [{ cookieAuth: [] }] },
+      preHandler: [requireAuth],
+    },
     async (req, reply) => {
       const { organisationId } = req.user!
       const q = dateRangeQuery.parse(req.query)
