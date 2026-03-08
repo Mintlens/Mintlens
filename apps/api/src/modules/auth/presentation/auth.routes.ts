@@ -23,6 +23,19 @@ const COOKIE_OPTS = {
 
 export async function authRoutes(app: FastifyInstance) {
   /**
+   * GET /v1/auth/csrf-token
+   * Returns a CSRF token for the current session.
+   * Must be called before any state-mutating cookie-authenticated request.
+   */
+  app.get('/csrf-token', {
+    schema: { tags: ['Auth'], summary: 'Get CSRF token' },
+  }, async (_req, reply) => {
+    // generateCsrf() is typed as returning FastifyReply in v4 @types but actually returns string
+    const token = await (reply.generateCsrf() as unknown as Promise<string>)
+    return reply.send({ data: { csrfToken: token } })
+  })
+
+  /**
    * POST /v1/auth/signup
    * Creates organisation + owner user, sets access_token cookie.
    */
@@ -58,6 +71,8 @@ export async function authRoutes(app: FastifyInstance) {
    */
   app.post('/logout', {
     schema: { tags: ['Auth'], summary: 'Logout (clears cookie)' },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onRequest: app.csrfProtection as any,
   }, async (_req, reply) => {
     reply.clearCookie('access_token', { path: '/' })
     return reply.send({ data: null })
@@ -77,6 +92,8 @@ export async function authRoutes(app: FastifyInstance) {
         summary: 'Generate SDK API key',
         security: [{ cookieAuth: [] }],
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      onRequest: app.csrfProtection as any,
       preHandler: [requireAuth, validateBody(generateApiKeyBody)],
     },
     async (req, reply) => {
