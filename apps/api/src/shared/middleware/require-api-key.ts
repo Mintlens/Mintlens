@@ -1,9 +1,9 @@
-import { createHash } from 'node:crypto'
 import type { FastifyRequest, FastifyReply } from 'fastify'
 import { eq, and, isNull } from 'drizzle-orm'
 import { db } from '../infrastructure/db.js'
 import { apiKeys, projects } from '#schema'
 import { AuthError, ForbiddenError } from '../errors/app-errors.js'
+import { hashApiKey } from '../../modules/auth/application/generate-api-key.usecase.js'
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -27,7 +27,7 @@ export async function requireApiKey(req: FastifyRequest, _reply: FastifyReply) {
     throw new AuthError('Invalid API key format')
   }
 
-  const keyHash = createHash('sha256').update(rawKey).digest('hex')
+  const keyHash = hashApiKey(rawKey)
 
   const [row] = await db
     .select({
