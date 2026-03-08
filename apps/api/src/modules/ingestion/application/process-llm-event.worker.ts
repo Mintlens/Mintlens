@@ -11,7 +11,7 @@
  */
 import { Worker } from 'bullmq'
 import { eq, and } from 'drizzle-orm'
-import { redis } from '../../../shared/infrastructure/redis.js'
+import { redis, getBullMQConnection } from '../../../shared/infrastructure/redis.js'
 import { db } from '../../../shared/infrastructure/db.js'
 import { llmRequests, features, tenants, projects } from '#schema'
 import { logger } from '../../../shared/logger/logger.js'
@@ -20,14 +20,7 @@ import type { LlmEventJob } from '../infrastructure/ingestion.queue.js'
 import { LLM_EVENTS_QUEUE } from '../infrastructure/ingestion.queue.js'
 
 export function startLlmEventsWorker() {
-  const redisUrl = process.env['REDIS_URL'] ?? 'redis://localhost:6379'
-  const parsedUrl = new URL(redisUrl)
-  const connection = {
-    host: parsedUrl.hostname,
-    port: Number(parsedUrl.port) || 6379,
-    password: parsedUrl.password || undefined,
-    db: parsedUrl.pathname ? Number(parsedUrl.pathname.slice(1)) || 0 : 0,
-  }
+  const connection = getBullMQConnection()
 
   const worker = new Worker<LlmEventJob>(
     LLM_EVENTS_QUEUE,

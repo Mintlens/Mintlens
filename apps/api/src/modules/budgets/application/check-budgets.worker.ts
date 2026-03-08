@@ -11,7 +11,7 @@ import { Queue, Worker } from 'bullmq'
 import { eq, and, isNull } from 'drizzle-orm'
 import { db } from '../../../shared/infrastructure/db.js'
 import { budgets, budgetAlerts, projects } from '#schema'
-import { redis } from '../../../shared/infrastructure/redis.js'
+import { redis, getBullMQConnection } from '../../../shared/infrastructure/redis.js'
 import { logger } from '../../../shared/logger/logger.js'
 import { sendBudgetAlertEmail } from './budget-alert.service.js'
 
@@ -108,14 +108,7 @@ async function checkAllBudgets() {
 }
 
 export function startBudgetCheckerWorker() {
-  const redisUrl  = process.env['REDIS_URL'] ?? 'redis://localhost:6379'
-  const parsedUrl = new URL(redisUrl)
-  const connection = {
-    host:     parsedUrl.hostname,
-    port:     Number(parsedUrl.port) || 6379,
-    password: parsedUrl.password || undefined,
-    db:       parsedUrl.pathname ? Number(parsedUrl.pathname.slice(1)) || 0 : 0,
-  }
+  const connection = getBullMQConnection()
 
   // Schedule repeatable job every 5 minutes
   const queue = new Queue(BUDGET_CHECK_QUEUE, { connection })
