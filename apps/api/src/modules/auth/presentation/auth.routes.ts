@@ -26,7 +26,10 @@ export async function authRoutes(app: FastifyInstance) {
    * POST /v1/auth/signup
    * Creates organisation + owner user, sets access_token cookie.
    */
-  app.post<{ Body: SignupBody }>('/signup', { preHandler: [validateBody(signupBody)] }, async (req, reply) => {
+  app.post<{ Body: SignupBody }>('/signup', {
+    schema: { body: signupBody, tags: ['Auth'], summary: 'Create account & organisation' },
+    preHandler: [validateBody(signupBody)],
+  }, async (req, reply) => {
     const tokens = await signupUseCase(req.body)
     reply.setCookie('access_token', tokens.accessToken, COOKIE_OPTS)
     return reply.status(201).send({
@@ -38,7 +41,10 @@ export async function authRoutes(app: FastifyInstance) {
    * POST /v1/auth/login
    * Returns access_token as httpOnly cookie.
    */
-  app.post<{ Body: LoginBody }>('/login', { preHandler: [validateBody(loginBody)] }, async (req, reply) => {
+  app.post<{ Body: LoginBody }>('/login', {
+    schema: { body: loginBody, tags: ['Auth'], summary: 'Login with email & password' },
+    preHandler: [validateBody(loginBody)],
+  }, async (req, reply) => {
     const tokens = await loginUseCase(req.body)
     reply.setCookie('access_token', tokens.accessToken, COOKIE_OPTS)
     return reply.send({
@@ -50,7 +56,9 @@ export async function authRoutes(app: FastifyInstance) {
    * POST /v1/auth/logout
    * Clears the access_token cookie.
    */
-  app.post('/logout', async (_req, reply) => {
+  app.post('/logout', {
+    schema: { tags: ['Auth'], summary: 'Logout (clears cookie)' },
+  }, async (_req, reply) => {
     reply.clearCookie('access_token', { path: '/' })
     return reply.send({ data: null })
   })
@@ -62,7 +70,15 @@ export async function authRoutes(app: FastifyInstance) {
    */
   app.post<{ Body: GenerateApiKeyBody }>(
     '/api-keys',
-    { preHandler: [requireAuth, validateBody(generateApiKeyBody)] },
+    {
+      schema: {
+        body: generateApiKeyBody,
+        tags: ['Auth'],
+        summary: 'Generate SDK API key',
+        security: [{ cookieAuth: [] }],
+      },
+      preHandler: [requireAuth, validateBody(generateApiKeyBody)],
+    },
     async (req, reply) => {
       const { organisationId } = req.user!
       const body = req.body

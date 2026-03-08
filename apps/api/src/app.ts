@@ -1,5 +1,6 @@
 import Fastify from 'fastify'
 import { ZodError } from 'zod'
+import { serializerCompiler, validatorCompiler, jsonSchemaTransform } from 'fastify-type-provider-zod'
 import { logger } from './shared/logger/logger.js'
 import { AppError } from './shared/errors/app-errors.js'
 
@@ -11,6 +12,10 @@ export async function buildApp() {
     genReqId: () => crypto.randomUUID(),
     trustProxy: true,
   })
+
+  // Enable Zod as the schema validator/serializer — feeds Swagger automatically
+  app.setValidatorCompiler(validatorCompiler)
+  app.setSerializerCompiler(serializerCompiler)
 
   // ── Global error handler ──────────────────────────────────────
   // Registered first so it applies to all plugin sub-scopes (Fastify v4 scoping).
@@ -47,6 +52,31 @@ export async function buildApp() {
     })
   })
 
+  // ── Swagger (dev only) ────────────────────────────────────────
+  if (process.env['NODE_ENV'] !== 'production') {
+    const { default: swagger }   = await import('@fastify/swagger')
+    const { default: swaggerUi } = await import('@fastify/swagger-ui')
+
+    await app.register(swagger, {
+      openapi: {
+        info: { title: 'Mintlens API', version: '0.1.0', description: 'LLM cost tracking & governance' },
+        servers: [{ url: 'http://localhost:3001' }],
+        components: {
+          securitySchemes: {
+            cookieAuth: { type: 'apiKey', in: 'cookie', name: 'access_token' },
+            apiKeyAuth: { type: 'apiKey', in: 'header', name: 'X-Api-Key' },
+          },
+        },
+      },
+      transform: jsonSchemaTransform,
+    })
+
+    await app.register(swaggerUi, {
+      routePrefix: '/docs',
+      uiConfig: { docExpansion: 'list', deepLinking: true },
+    })
+  }
+
   // ── Plugins ───────────────────────────────────────────────────
   const { default: helmet }    = await import('@fastify/helmet')
   const { default: cors }      = await import('@fastify/cors')
@@ -54,14 +84,15 @@ export async function buildApp() {
   const { default: rateLimit } = await import('@fastify/rate-limit')
 
   await app.register(helmet, {
-    contentSecurityPolicy: {
+    // Swagger UI needs inline scripts/styles — relax CSP in non-production
+    contentSecurityPolicy: process.env['NODE_ENV'] === 'production' ? {
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", 'data:'],
       },
-    },
+    } : false,
     hsts: { maxAge: 31_536_000, includeSubDomains: true },
   })
 
