@@ -1,7 +1,14 @@
 import jwt from 'jsonwebtoken'
 import type { AuthTokens, JwtPayload } from '../domain/auth.types.js'
 
-const JWT_SECRET = process.env['JWT_SECRET'] ?? 'dev-secret-change-in-production'
+const _rawJwtSecret = process.env['JWT_SECRET']
+const _devFallback = 'dev-secret-change-in-production'
+if (!_rawJwtSecret || _rawJwtSecret === _devFallback) {
+  if (process.env['NODE_ENV'] === 'production') {
+    throw new Error('JWT_SECRET must be set to a non-default value in production')
+  }
+}
+const JWT_SECRET = _rawJwtSecret ?? _devFallback
 const JWT_TTL_SECONDS = 60 * 60 * 24 * 7 // 7 days
 
 export function issueTokens(
