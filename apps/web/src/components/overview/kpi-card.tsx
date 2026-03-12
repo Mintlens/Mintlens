@@ -16,7 +16,7 @@ export function KpiCard({ title, value, change, subtitle, accent }: KpiCardProps
   const neutral  = change === undefined || change === 0
 
   return (
-    <Card className={cn('transition-shadow duration-150 hover:shadow-card-hover', accent && 'border-l-2 border-l-mint-400')}>
+    <Card className={cn('transition-all duration-200 hover:shadow-card-hover hover:scale-[1.01]', accent && 'border-l-2 border-l-mint-400')}>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>

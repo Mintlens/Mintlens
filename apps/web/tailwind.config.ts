@@ -24,11 +24,13 @@ const config: Config = {
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
-        DEFAULT: '0.5rem',
+        DEFAULT: '0.75rem',
+        'ios': '1rem',
+        'ios-lg': '1.25rem',
       },
       boxShadow: {
-        card: '0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04)',
-        'card-hover': '0 4px 12px 0 rgb(0 0 0 / 0.08), 0 2px 4px -1px rgb(0 0 0 / 0.06)',
+        card: '0 0 0 1px rgb(0 0 0 / 0.03), 0 2px 8px 0 rgb(0 0 0 / 0.04)',
+        'card-hover': '0 0 0 1px rgb(0 0 0 / 0.03), 0 8px 24px 0 rgb(0 0 0 / 0.08)',
       },
       keyframes: {
         'fade-in': {
