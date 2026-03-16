@@ -8,10 +8,15 @@ import { listBudgetsUseCase, deleteBudgetUseCase } from '../application/list-bud
 
 const budgetParams = z.object({ budgetId: z.string().uuid() })
 
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
+
 export async function budgetsRoutes(app: FastifyInstance) {
-  // CSRF protection applies to all routes in this plugin scope
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  app.addHook('onRequest', app.csrfProtection as any)
+  // CSRF protection — only on state-mutating methods (POST, PUT, DELETE …)
+  app.addHook('onRequest', async (req, reply) => {
+    if (SAFE_METHODS.has(req.method)) return
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (app.csrfProtection as any)(req, reply)
+  })
 
   /**
    * POST /v1/budgets
