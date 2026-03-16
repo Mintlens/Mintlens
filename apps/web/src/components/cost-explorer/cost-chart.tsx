@@ -49,11 +49,11 @@ export function CostChart({ data }: CostChartProps) {
                 </div>
                 <div className="flex items-center justify-between gap-6">
                   <span className="text-slate-500">Requests</span>
-                  <span className="font-medium text-slate-800">{formatNumber(p.requestCount)}</span>
+                  <span className="font-medium text-slate-800">{formatNumber(p.requests)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-6">
                   <span className="text-slate-500">Tokens</span>
-                  <span className="font-medium text-slate-800">{formatNumber(p.tokensInput + p.tokensOutput)}</span>
+                  <span className="font-medium text-slate-800">{formatNumber(p.tokens)}</span>
                 </div>
               </div>
             )

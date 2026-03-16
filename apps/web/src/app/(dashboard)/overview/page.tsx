@@ -13,6 +13,7 @@ import { OverviewSkeleton } from '@/components/overview/overview-skeleton'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { formatUsd, formatNumber } from '@/lib/format'
 import { cn } from '@/lib/cn'
+import type { CostByDimension } from '@mintlens/shared'
 
 /* ------------------------------------------------------------------ */
 /*  Date helpers                                                       */
@@ -62,21 +63,18 @@ function OverviewContent() {
     return <OverviewSkeleton />
   }
 
-  /* Derived metrics */
-  const cur  = summary?.currentMonth
-  const prev = summary?.previousMonth
-
-  const costChange = prev && cur && prev.costMicro > 0
-    ? ((cur.costMicro - prev.costMicro) / prev.costMicro) * 100
+  /* Derived metrics from the flat AnalyticsSummary */
+  const costChange = summary?.costChangePct != null
+    ? summary.costChangePct * 100   // decimal → percentage for display
     : undefined
 
-  const reqChange = prev && cur && prev.requestCount > 0
-    ? ((cur.requestCount - prev.requestCount) / prev.requestCount) * 100
-    : undefined
+  const avgCostPerReq = summary && summary.totalRequests > 0
+    ? summary.totalCostMicro / summary.totalRequests
+    : 0
 
   /* Build 7-day sparkline data from the last 7 points of the timeseries */
   const last7 = explorer?.timeSeries.slice(-7).map((d) => d.costMicro) ?? []
-  const last7Reqs = explorer?.timeSeries.slice(-7).map((d) => d.requestCount) ?? []
+  const last7Reqs = explorer?.timeSeries.slice(-7).map((d) => d.requests) ?? []
 
   /* Primary budget (first one, if any) */
   const primaryBudget = budgets?.[0]
@@ -95,7 +93,7 @@ function OverviewContent() {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <KpiCard
           title="Total Spend"
-          value={loadingSummary ? '—' : formatUsd(cur?.costMicro ?? 0)}
+          value={loadingSummary ? '—' : formatUsd(summary?.totalCostMicro ?? 0)}
           change={costChange}
           subtitle="vs previous period"
           sparkData={last7}
@@ -103,15 +101,14 @@ function OverviewContent() {
         />
         <KpiCard
           title="Requests"
-          value={loadingSummary ? '—' : formatNumber(cur?.requestCount ?? 0)}
-          change={reqChange}
+          value={loadingSummary ? '—' : formatNumber(summary?.totalRequests ?? 0)}
           subtitle="API calls"
           sparkData={last7Reqs}
           sparkColor="#6366f1"
         />
         <KpiCard
           title="Avg Cost / Req"
-          value={loadingSummary ? '—' : formatUsd(cur?.avgCostPerRequestMicro ?? 0)}
+          value={loadingSummary ? '—' : formatUsd(avgCostPerReq)}
           subtitle="Across all models"
         />
 
@@ -169,26 +166,26 @@ function OverviewContent() {
 
         {/* Right — Stacked panels (2/5 = 40%) */}
         <div className="space-y-4 lg:col-span-2">
-          {/* Cost by Model */}
-          {summary && (
+          {/* Cost by Model — from cost-explorer breakdowns */}
+          {explorer && (
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle>Cost by model</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <BreakdownList rows={summary.topModels} />
+                <BreakdownList rows={explorer.byModel} />
               </CardContent>
             </Card>
           )}
 
-          {/* Top Consumers (features) */}
-          {summary && (
+          {/* Top Consumers (features) — from cost-explorer breakdowns */}
+          {explorer && (
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle>Top consumers</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <BreakdownList rows={summary.topFeatures} />
+                <BreakdownList rows={explorer.byFeature} />
               </CardContent>
             </Card>
           )}
@@ -205,43 +202,39 @@ function OverviewContent() {
 /*  Reusable sub-components                                            */
 /* ------------------------------------------------------------------ */
 
-interface BreakdownRow {
-  key: string
-  label: string
-  costMicro: number
-  percentage: number
-}
-
-function BreakdownList({ rows }: { rows: BreakdownRow[] }) {
+function BreakdownList({ rows }: { rows: CostByDimension[] }) {
   if (rows.length === 0) {
     return <p className="px-5 py-4 text-xs text-slate-400">No data</p>
   }
 
   return (
     <div className="divide-y divide-slate-50">
-      {rows.slice(0, 5).map((r) => (
-        <div key={r.key} className="flex items-center gap-3 px-5 py-2.5">
-          <span className="flex-1 truncate text-sm text-slate-700">
-            {r.label || r.key}
-          </span>
-          <span className="text-xs tabular-nums text-slate-400">
-            {formatUsd(r.costMicro)}
-          </span>
-          <div className="w-20">
-            <div className="flex items-center gap-1.5">
-              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className="h-full rounded-full bg-mint-400 transition-all duration-300"
-                  style={{ width: `${Math.min(r.percentage, 100)}%` }}
-                />
+      {rows.slice(0, 5).map((r) => {
+        const pct = r.costPct * 100
+        return (
+          <div key={r.key} className="flex items-center gap-3 px-5 py-2.5">
+            <span className="flex-1 truncate text-sm text-slate-700">
+              {r.label || r.key}
+            </span>
+            <span className="text-xs tabular-nums text-slate-400">
+              {formatUsd(r.costMicro)}
+            </span>
+            <div className="w-20">
+              <div className="flex items-center gap-1.5">
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full bg-mint-400 transition-all duration-300"
+                    style={{ width: `${Math.min(pct, 100)}%` }}
+                  />
+                </div>
+                <span className="w-7 text-right text-[10px] tabular-nums text-slate-400">
+                  {pct.toFixed(0)}%
+                </span>
               </div>
-              <span className="w-7 text-right text-[10px] tabular-nums text-slate-400">
-                {r.percentage.toFixed(0)}%
-              </span>
             </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

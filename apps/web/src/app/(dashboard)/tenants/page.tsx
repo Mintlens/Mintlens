@@ -39,11 +39,11 @@ function sortTenants(tenants: TenantOverview[], key: SortKey, asc: boolean) {
       case 'cost':
         va = a.costMicro; vb = b.costMicro; break
       case 'requests':
-        va = a.requestCount; vb = b.requestCount; break
+        va = a.requests; vb = b.requests; break
       case 'tokens':
-        va = a.tokensTotal; vb = b.tokensTotal; break
+        va = a.tokens; vb = b.tokens; break
       case 'margin':
-        va = a.marginPercent ?? 0; vb = b.marginPercent ?? 0; break
+        va = a.grossMargin ?? 0; vb = b.grossMargin ?? 0; break
     }
     return asc ? va - vb : vb - va
   })
@@ -83,7 +83,7 @@ function TenantsContent() {
     const q = search.toLowerCase()
     return (
       t.externalRef.toLowerCase().includes(q) ||
-      (t.tenantName ?? '').toLowerCase().includes(q)
+      (t.name ?? '').toLowerCase().includes(q)
     )
   })
 
@@ -91,8 +91,8 @@ function TenantsContent() {
 
   // Aggregated totals
   const totalCost     = filtered.reduce((s, t) => s + t.costMicro, 0)
-  const totalRequests = filtered.reduce((s, t) => s + t.requestCount, 0)
-  const totalTokens   = filtered.reduce((s, t) => s + t.tokensTotal, 0)
+  const totalRequests = filtered.reduce((s, t) => s + t.requests, 0)
+  const totalTokens   = filtered.reduce((s, t) => s + t.tokens, 0)
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
@@ -152,7 +152,7 @@ function TenantsContent() {
                   <SortableHeader label="Tokens"   sortKey="tokens"   current={sortKey} asc={sortAsc} onSort={toggleSort} />
                   <SortableHeader label="Margin"   sortKey="margin"   current={sortKey} asc={sortAsc} onSort={toggleSort} />
                   <th className="py-2.5 pl-3 pr-5 font-medium text-slate-500 text-xs uppercase tracking-wide text-right">
-                    Top features
+                    Last seen
                   </th>
                 </tr>
               </thead>

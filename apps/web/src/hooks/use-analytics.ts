@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api-client'
-import type { DashboardSummary, CostExplorerResult, TenantOverview } from '@mintlens/shared'
+import type { AnalyticsSummary, CostExplorerResult, TenantOverview } from '@mintlens/shared'
 
-interface SummaryResponse extends DashboardSummary {
+interface SummaryResponse extends AnalyticsSummary {
   totalCostUsd: number
 }
 

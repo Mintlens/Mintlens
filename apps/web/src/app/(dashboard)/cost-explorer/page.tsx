@@ -67,10 +67,9 @@ function CostExplorerContent() {
       {/* Totals strip */}
       {data && (
         <div className="flex gap-6 rounded-lg border border-slate-100 bg-white px-5 py-3 text-sm">
-          <Stat label="Total cost"    value={formatUsd(data.totals.costMicro)} />
-          <Stat label="Requests"      value={formatNumber(data.totals.requestCount)} />
-          <Stat label="Tokens in"     value={formatNumber(data.totals.tokensInput)} />
-          <Stat label="Tokens out"    value={formatNumber(data.totals.tokensOutput)} />
+          <Stat label="Total cost"    value={formatUsd(data.totalCostMicro)} />
+          <Stat label="Requests"      value={formatNumber(data.totalRequests)} />
+          <Stat label="Tokens"        value={formatNumber(data.totalTokens)} />
         </div>
       )}
 
