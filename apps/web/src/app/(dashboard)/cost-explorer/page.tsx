@@ -7,6 +7,7 @@ import { useCostExplorer } from '@/hooks/use-analytics'
 import { CostChart } from '@/components/cost-explorer/cost-chart'
 import { BreakdownTable } from '@/components/cost-explorer/breakdown-table'
 import { FiltersBar } from '@/components/cost-explorer/filters-bar'
+import { CostExplorerSkeleton } from '@/components/cost-explorer/cost-explorer-skeleton'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { formatUsd, formatNumber } from '@/lib/format'
 
@@ -42,6 +43,10 @@ function CostExplorerContent() {
     )
   }
 
+  if (isLoading && !data) {
+    return <CostExplorerSkeleton />
+  }
+
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-start justify-between gap-4">
@@ -75,9 +80,7 @@ function CostExplorerContent() {
           <CardTitle>Spend over time</CardTitle>
         </CardHeader>
         <CardContent className="px-4 pb-4">
-          {isLoading ? (
-            <div className="flex h-60 items-center justify-center text-xs text-slate-400">Loading…</div>
-          ) : data && data.timeSeries.length > 0 ? (
+          {data && data.timeSeries.length > 0 ? (
             <CostChart data={data.timeSeries} />
           ) : (
             <div className="flex h-60 items-center justify-center text-xs text-slate-400">No data</div>

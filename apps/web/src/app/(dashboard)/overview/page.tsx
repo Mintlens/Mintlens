@@ -9,6 +9,7 @@ import { useBudgets } from '@/hooks/use-budgets'
 import { KpiCard } from '@/components/overview/kpi-card'
 import { BudgetGauge } from '@/components/overview/budget-gauge'
 import { CostSparkline } from '@/components/overview/cost-sparkline'
+import { OverviewSkeleton } from '@/components/overview/overview-skeleton'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { formatUsd, formatNumber } from '@/lib/format'
 import { cn } from '@/lib/cn'
@@ -54,6 +55,11 @@ function OverviewContent() {
         <p className="text-xs text-slate-400">Choose one from the top bar</p>
       </div>
     )
+  }
+
+  /* Skeleton while data is loading */
+  if (loadingSummary && !summary) {
+    return <OverviewSkeleton />
   }
 
   /* Derived metrics */

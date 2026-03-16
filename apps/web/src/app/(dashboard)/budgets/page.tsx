@@ -4,6 +4,7 @@ import { Suspense } from 'react'
 import { useAuthStore } from '@/store/auth.store'
 import { useBudgets, useDeleteBudget } from '@/hooks/use-budgets'
 import { BudgetCard } from '@/components/budgets/budget-card'
+import { BudgetsSkeleton } from '@/components/budgets/budgets-skeleton'
 import { CreateBudgetDialog } from '@/components/budgets/create-budget-dialog'
 import { Wallet } from 'lucide-react'
 
@@ -32,8 +33,8 @@ function BudgetsContent() {
       </div>
 
       {/* List */}
-      {isLoading ? (
-        <div className="flex h-32 items-center justify-center text-sm text-slate-400">Loading…</div>
+      {isLoading && !budgets ? (
+        <BudgetsSkeleton />
       ) : !budgets || budgets.length === 0 ? (
         <div className="flex h-48 flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-slate-200 bg-white">
           <Wallet className="h-8 w-8 text-slate-200" />
