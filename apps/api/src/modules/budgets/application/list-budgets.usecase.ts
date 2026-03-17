@@ -3,7 +3,20 @@ import { db } from '../../../shared/infrastructure/db.js'
 import { budgets, projects } from '#schema'
 import { redis } from '../../../shared/infrastructure/redis.js'
 import { NotFoundError } from '../../../shared/errors/app-errors.js'
-import type { BudgetUsage, BudgetPeriod } from '../domain/budgets.types.js'
+import type { BudgetPeriod } from '../domain/budgets.types.js'
+
+/** Shape expected by the frontend — matches @mintlens/shared BudgetStatus */
+export interface BudgetStatusRow {
+  budgetId: string
+  name: string
+  scope: 'project' | 'tenant' | 'feature'
+  period: string
+  limitMicro: number
+  currentMicro: number
+  usagePercent: number
+  isBlocked: boolean
+  alertsTriggered: number[]
+}
 
 /** Returns the Redis key for a budget's current-period counter */
 function budgetRedisKey(
@@ -27,7 +40,7 @@ function budgetRedisKey(
 export async function listBudgetsUseCase(
   organisationId: string,
   projectId: string,
-): Promise<BudgetUsage[]> {
+): Promise<BudgetStatusRow[]> {
   // Verify project belongs to org
   const [project] = await db
     .select({ id: projects.id })
@@ -56,19 +69,23 @@ export async function listBudgetsUseCase(
 
   return rows.map((b, i) => {
     const raw = results?.[i]?.[1]
-    const spentMicro = raw ? Number(raw) : 0
-    const usagePct   = b.limitMicro > 0 ? spentMicro / b.limitMicro : 0
+    const spentMicro   = raw ? Number(raw) : 0
+    const usagePercent = b.limitMicro > 0 ? (spentMicro / b.limitMicro) * 100 : 0
+
+    // Determine which alert thresholds have been triggered
+    const thresholds = (b.alertThresholds ?? [80, 100]) as number[]
+    const alertsTriggered = thresholds.filter((t) => usagePercent >= t)
 
     return {
-      budgetId:          b.id,
-      name:              b.name,
-      scope:             b.scope as BudgetUsage['scope'],
-      period:            b.period as BudgetPeriod,
-      limitMicro:        b.limitMicro,
-      spentMicro,
-      usagePct,
-      killSwitchEnabled: b.killSwitchEnabled,
-      isActive:          b.isActive,
+      budgetId:        b.id,
+      name:            b.name,
+      scope:           b.scope as BudgetStatusRow['scope'],
+      period:          b.period,
+      limitMicro:      b.limitMicro,
+      currentMicro:    spentMicro,
+      usagePercent,
+      isBlocked:       b.killSwitchEnabled && usagePercent >= 100,
+      alertsTriggered,
     }
   })
 }
