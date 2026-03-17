@@ -4,7 +4,8 @@ import { requireAuth } from '../../../shared/middleware/require-auth.js'
 import { getSummaryUseCase } from '../application/get-summary.usecase.js'
 import { getCostExplorerUseCase } from '../application/get-cost-explorer.usecase.js'
 import { getTenantsOverviewUseCase } from '../application/get-tenants-overview.usecase.js'
-import { summaryQuery, costExplorerQuery, tenantsOverviewQuery } from './analytics.schemas.js'
+import { getRequestsUseCase } from '../application/get-requests.usecase.js'
+import { summaryQuery, costExplorerQuery, tenantsOverviewQuery, requestsQuery } from './analytics.schemas.js'
 import { microToUsd } from '../../ingestion/application/cost-calculator.js'
 
 const withProject = z.object({ projectId: z.string().uuid() })
@@ -82,5 +83,31 @@ export async function analyticsRoutes(app: FastifyInstance) {
     )
 
     return reply.send({ data: tenants })
+  })
+
+  /**
+   * GET /v1/analytics/requests?projectId=&from=&to=&limit=&offset=&provider=&...
+   * Paginated list of individual LLM requests with filters.
+   */
+  app.get('/requests', {
+    schema: { tags: ['Analytics'], summary: 'Paginated LLM request logs', security: [{ cookieAuth: [] }] },
+    preHandler: [requireAuth],
+  }, async (req, reply) => {
+    const q = withProject.merge(requestsQuery).parse(req.query)
+
+    const result = await getRequestsUseCase({
+      projectId:   q.projectId,
+      from:        q.from,
+      to:          q.to,
+      limit:       q.limit,
+      offset:      q.offset,
+      ...(q.provider    !== undefined ? { provider:    q.provider }    : {}),
+      ...(q.model       !== undefined ? { model:       q.model }       : {}),
+      ...(q.featureKey  !== undefined ? { featureKey:  q.featureKey }  : {}),
+      ...(q.tenantId    !== undefined ? { tenantId:    q.tenantId }    : {}),
+      ...(q.environment !== undefined ? { environment: q.environment } : {}),
+    })
+
+    return reply.send({ data: result })
   })
 }

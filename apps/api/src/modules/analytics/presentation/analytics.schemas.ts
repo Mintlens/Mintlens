@@ -35,6 +35,21 @@ export const tenantsOverviewQuery = z.object({
   offset: z.coerce.number().int().min(0).default(0),
 })
 
-export type SummaryQuery        = z.infer<typeof summaryQuery>
-export type CostExplorerQuery   = z.infer<typeof costExplorerQuery>
+export const requestsQuery = z.object({
+  from: dateParam(() => {
+    const d = new Date(); d.setDate(d.getDate() - 30); return d
+  }),
+  to:          dateParam(() => new Date()),
+  limit:       z.coerce.number().int().min(1).max(200).default(50),
+  offset:      z.coerce.number().int().min(0).default(0),
+  provider:    z.string().optional(),
+  model:       z.string().optional(),
+  featureKey:  z.string().optional(),
+  tenantId:    z.string().uuid().optional(),
+  environment: z.string().optional(),
+})
+
+export type SummaryQuery         = z.infer<typeof summaryQuery>
+export type CostExplorerQuery    = z.infer<typeof costExplorerQuery>
 export type TenantsOverviewQuery = z.infer<typeof tenantsOverviewQuery>
+export type RequestsQuery        = z.infer<typeof requestsQuery>
