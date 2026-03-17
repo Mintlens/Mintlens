@@ -1,7 +1,9 @@
+import { z } from 'zod'
 import type { FastifyInstance } from 'fastify'
 import { signupUseCase } from '../application/signup.usecase.js'
 import { loginUseCase } from '../application/login.usecase.js'
 import { generateApiKeyUseCase } from '../application/generate-api-key.usecase.js'
+import { listApiKeysUseCase, revokeApiKeyUseCase } from '../application/list-api-keys.usecase.js'
 import { requireAuth } from '../../../shared/middleware/require-auth.js'
 import { validateBody } from '../../../shared/middleware/validate-body.js'
 import {
@@ -115,6 +117,44 @@ export async function authRoutes(app: FastifyInstance) {
           warning: 'Save this key — it will not be shown again.',
         },
       })
+    },
+  )
+
+  /**
+   * GET /v1/auth/api-keys?projectId=
+   * Lists all API keys for a project (never exposes the raw key).
+   */
+  app.get('/api-keys', {
+    schema: { tags: ['Auth'], summary: 'List API keys for a project', security: [{ cookieAuth: [] }] },
+    preHandler: [requireAuth],
+  }, async (req, reply) => {
+    const { organisationId } = req.user!
+    const q = z.object({ projectId: z.string().uuid() }).parse(req.query)
+    const keys = await listApiKeysUseCase(organisationId, q.projectId)
+    return reply.send({ data: keys })
+  })
+
+  /**
+   * DELETE /v1/auth/api-keys/:keyId
+   * Revokes an API key.
+   */
+  app.delete<{ Params: { keyId: string } }>(
+    '/api-keys/:keyId',
+    {
+      schema: {
+        params: z.object({ keyId: z.string().uuid() }),
+        tags: ['Auth'],
+        summary: 'Revoke an API key',
+        security: [{ cookieAuth: [] }],
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      onRequest: app.csrfProtection as any,
+      preHandler: [requireAuth],
+    },
+    async (req, reply) => {
+      const { organisationId } = req.user!
+      await revokeApiKeyUseCase(organisationId, req.params.keyId)
+      return reply.status(204).send()
     },
   )
 }
