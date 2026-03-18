@@ -181,9 +181,12 @@ describe('POST /v1/auth/api-keys', () => {
     })
 
     it('returns 401 without authentication', async () => {
+        // Send CSRF token but no access_token — auth should fail after CSRF passes
+        const csrf = await getCsrf(app)
         const res = await app.inject({
             method: 'POST',
             url: '/v1/auth/api-keys',
+            headers: { cookie: csrf.cookie, 'x-csrf-token': csrf.token },
             payload: { projectId: 'some-uuid', name: 'Key' },
         })
         expect(res.statusCode).toBe(401)
