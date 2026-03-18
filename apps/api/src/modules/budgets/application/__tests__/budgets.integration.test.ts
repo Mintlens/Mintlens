@@ -161,7 +161,7 @@ describe('GET /v1/budgets', () => {
         const body = res.json<{ data: Array<{ name: string; spentMicro: number }> }>()
         expect(body.data).toHaveLength(2)
         // All budgets start with zero spend (no events ingested)
-        expect(body.data.every((b) => b.spentMicro === 0)).toBe(true)
+        expect(body.data.every((b) => b.currentMicro === 0)).toBe(true)
         const names = body.data.map((b) => b.name)
         expect(names).toContain('Budget A')
         expect(names).toContain('Budget B')
@@ -253,9 +253,12 @@ describe('DELETE /v1/budgets/:budgetId', () => {
     })
 
     it('returns 401 without authentication', async () => {
+        // Send CSRF token but no access_token — auth should fail
+        const csrf = await getCsrf(app)
         const res = await app.inject({
             method: 'DELETE',
             url:    '/v1/budgets/00000000-0000-0000-0000-000000000000',
+            headers: { cookie: csrf.cookie, 'x-csrf-token': csrf.token },
         })
 
         expect(res.statusCode).toBe(401)
