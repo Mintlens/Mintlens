@@ -32,7 +32,11 @@ export async function projectsRoutes(app: FastifyInstance) {
   app.addHook('onRequest', async (req, reply) => {
     if (SAFE_METHODS.has(req.method)) return
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (app.csrfProtection as any)(req, reply)
+    await new Promise<void>((resolve, reject) => {
+      (app.csrfProtection as any)(req, reply, (err: Error | undefined) => {
+        err ? reject(err) : resolve()
+      })
+    })
   })
 
   /**
