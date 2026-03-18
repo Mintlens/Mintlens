@@ -2,6 +2,7 @@ import { z } from 'zod'
 import type { FastifyInstance } from 'fastify'
 import { signupUseCase } from '../application/signup.usecase.js'
 import { loginUseCase } from '../application/login.usecase.js'
+import { getMeUseCase } from '../application/get-me.usecase.js'
 import { generateApiKeyUseCase } from '../application/generate-api-key.usecase.js'
 import { listApiKeysUseCase, revokeApiKeyUseCase } from '../application/list-api-keys.usecase.js'
 import { requireAuth } from '../../../shared/middleware/require-auth.js'
@@ -78,6 +79,19 @@ export async function authRoutes(app: FastifyInstance) {
   }, async (_req, reply) => {
     reply.clearCookie('access_token', { path: '/' })
     return reply.send({ data: null })
+  })
+
+  /**
+   * GET /v1/auth/me
+   * Returns the authenticated user's profile and organisation.
+   */
+  app.get('/me', {
+    schema: { tags: ['Auth'], summary: 'Get current user profile', security: [{ cookieAuth: [] }] },
+    preHandler: [requireAuth],
+  }, async (req, reply) => {
+    const { userId } = req.user!
+    const result = await getMeUseCase(userId)
+    return reply.send({ data: result })
   })
 
   /**
