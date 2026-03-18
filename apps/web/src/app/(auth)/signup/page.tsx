@@ -26,7 +26,7 @@ export default function SignupPage() {
     setLoading(true)
     try {
       await apiFetch('/v1/auth/signup', { method: 'POST', body: JSON.stringify(form) })
-      router.push('/overview')
+      router.push('/onboarding')
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : 'An error occurred')
     } finally {
