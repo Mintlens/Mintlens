@@ -14,6 +14,7 @@ import type { FastifyInstance } from 'fastify'
 import { buildApp } from '../../../../app.js'
 import { db } from '../../../../shared/infrastructure/db.js'
 import { llmRequests, tenants } from '#schema'
+import { extractAccessToken, getCsrf, authHeaders, authGetHeaders } from '../../../../test/helpers.js'
 
 let app: FastifyInstance
 
@@ -35,26 +36,22 @@ const SIGNUP_PAYLOAD = {
     organisationName: 'Analytics Test Corp',
 }
 
-function extractCookie(setCookieHeader: string | string[]): string {
-    const header = Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader
-    const match = header?.match(/access_token=([^;]+)/)
-    if (!match?.[1]) throw new Error('access_token cookie not found in response')
-    return match[1]
-}
-
 async function setupProject(app: FastifyInstance): Promise<{ accessToken: string; projectId: string }> {
+    const csrf = await getCsrf(app)
     const signupRes = await app.inject({
         method: 'POST',
         url: '/v1/auth/signup',
+        headers: { cookie: csrf.cookie, 'x-csrf-token': csrf.token },
         payload: SIGNUP_PAYLOAD,
     })
     expect(signupRes.statusCode).toBe(201)
-    const accessToken = extractCookie(signupRes.headers['set-cookie']!)
+    const accessToken = extractAccessToken(signupRes.headers['set-cookie']!)
 
+    const csrf2 = await getCsrf(app)
     const projectRes = await app.inject({
         method: 'POST',
         url: '/v1/projects',
-        headers: { cookie: `access_token=${accessToken}` },
+        headers: authHeaders(accessToken, csrf2),
         payload: { name: 'Analytics Test App', environment: 'production' },
     })
     expect(projectRes.statusCode).toBe(201)
@@ -96,6 +93,7 @@ const TO = '2026-04-01T00:00:00.000Z'
 describe('GET /v1/analytics/summary', () => {
     it('returns aggregated KPIs for a project with data', async () => {
         const { accessToken, projectId } = await setupProject(app)
+        const csrf = await getCsrf(app)
 
         await seedRequests([
             { projectId, costTotalMicro: 10_000, tokensInput: 500, tokensOutput: 100, latencyMs: 800 },
@@ -105,7 +103,7 @@ describe('GET /v1/analytics/summary', () => {
         const res = await app.inject({
             method: 'GET',
             url: `/v1/analytics/summary?projectId=${projectId}&from=${FROM}&to=${TO}`,
-            headers: { cookie: `access_token=${accessToken}` },
+            headers: authGetHeaders(accessToken, csrf),
         })
 
         expect(res.statusCode).toBe(200)
@@ -128,11 +126,12 @@ describe('GET /v1/analytics/summary', () => {
 
     it('returns zero totals for an empty project', async () => {
         const { accessToken, projectId } = await setupProject(app)
+        const csrf = await getCsrf(app)
 
         const res = await app.inject({
             method: 'GET',
             url: `/v1/analytics/summary?projectId=${projectId}&from=${FROM}&to=${TO}`,
-            headers: { cookie: `access_token=${accessToken}` },
+            headers: authGetHeaders(accessToken, csrf),
         })
 
         expect(res.statusCode).toBe(200)
@@ -157,6 +156,7 @@ describe('GET /v1/analytics/summary', () => {
 describe('GET /v1/analytics/cost-explorer', () => {
     it('returns time series and breakdowns with day granularity', async () => {
         const { accessToken, projectId } = await setupProject(app)
+        const csrf = await getCsrf(app)
 
         await seedRequests([
             { projectId, costTotalMicro: 5_000 },
@@ -166,7 +166,7 @@ describe('GET /v1/analytics/cost-explorer', () => {
         const res = await app.inject({
             method: 'GET',
             url: `/v1/analytics/cost-explorer?projectId=${projectId}&from=${FROM}&to=${TO}&granularity=day`,
-            headers: { cookie: `access_token=${accessToken}` },
+            headers: authGetHeaders(accessToken, csrf),
         })
 
         expect(res.statusCode).toBe(200)
@@ -187,11 +187,12 @@ describe('GET /v1/analytics/cost-explorer', () => {
 
     it('returns 400 for an invalid granularity value', async () => {
         const { accessToken, projectId } = await setupProject(app)
+        const csrf = await getCsrf(app)
 
         const res = await app.inject({
             method: 'GET',
             url: `/v1/analytics/cost-explorer?projectId=${projectId}&from=${FROM}&to=${TO}&granularity=invalid`,
-            headers: { cookie: `access_token=${accessToken}` },
+            headers: authGetHeaders(accessToken, csrf),
         })
         expect(res.statusCode).toBe(400)
     })
@@ -202,6 +203,7 @@ describe('GET /v1/analytics/cost-explorer', () => {
 describe('GET /v1/analytics/tenants', () => {
     it('returns per-tenant cost breakdown', async () => {
         const { accessToken, projectId } = await setupProject(app)
+        const csrf = await getCsrf(app)
 
         // Create two tenants (the `tenants` table uses UUID PK, externalRef is the opaque ID)
         const [tenantA, tenantB] = await db
@@ -240,7 +242,7 @@ describe('GET /v1/analytics/tenants', () => {
         const res = await app.inject({
             method: 'GET',
             url: `/v1/analytics/tenants?projectId=${projectId}&from=${FROM}&to=${TO}`,
-            headers: { cookie: `access_token=${accessToken}` },
+            headers: authGetHeaders(accessToken, csrf),
         })
 
         expect(res.statusCode).toBe(200)
@@ -255,11 +257,12 @@ describe('GET /v1/analytics/tenants', () => {
 
     it('returns empty array for a project with no tenants', async () => {
         const { accessToken, projectId } = await setupProject(app)
+        const csrf = await getCsrf(app)
 
         const res = await app.inject({
             method: 'GET',
             url: `/v1/analytics/tenants?projectId=${projectId}&from=${FROM}&to=${TO}`,
-            headers: { cookie: `access_token=${accessToken}` },
+            headers: authGetHeaders(accessToken, csrf),
         })
 
         expect(res.statusCode).toBe(200)

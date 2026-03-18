@@ -9,6 +9,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import type { FastifyInstance } from 'fastify'
 import { buildApp } from '../../../../app.js'
+import { extractAccessToken, getCsrf, authHeaders } from '../../../../test/helpers.js'
 
 let app: FastifyInstance
 
@@ -30,38 +31,35 @@ const SIGNUP_PAYLOAD = {
     organisationName: 'Ingestion Test Corp',
 }
 
-function extractCookie(setCookieHeader: string | string[]): string {
-    const header = Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader
-    const match = header?.match(/access_token=([^;]+)/)
-    if (!match?.[1]) throw new Error('access_token cookie not found in response')
-    return match[1]
-}
-
 async function setupUserAndApiKey(app: FastifyInstance): Promise<{ rawKey: string; projectId: string }> {
     // 1. Signup
+    const csrf = await getCsrf(app)
     const signupRes = await app.inject({
         method: 'POST',
         url: '/v1/auth/signup',
+        headers: { cookie: csrf.cookie, 'x-csrf-token': csrf.token },
         payload: SIGNUP_PAYLOAD,
     })
     expect(signupRes.statusCode).toBe(201)
-    const accessToken = extractCookie(signupRes.headers['set-cookie']!)
+    const accessToken = extractAccessToken(signupRes.headers['set-cookie']!)
 
     // 2. Create project
+    const csrf2 = await getCsrf(app)
     const projectRes = await app.inject({
         method: 'POST',
         url: '/v1/projects',
-        headers: { cookie: `access_token=${accessToken}` },
+        headers: authHeaders(accessToken, csrf2),
         payload: { name: 'Ingestion Test App', environment: 'production' },
     })
     expect(projectRes.statusCode).toBe(201)
     const projectId = projectRes.json<{ data: { id: string } }>().data.id
 
     // 3. Generate API key
+    const csrf3 = await getCsrf(app)
     const keyRes = await app.inject({
         method: 'POST',
         url: '/v1/auth/api-keys',
-        headers: { cookie: `access_token=${accessToken}` },
+        headers: authHeaders(accessToken, csrf3),
         payload: { projectId, name: 'Ingestion SDK Key' },
     })
     expect(keyRes.statusCode).toBe(201)

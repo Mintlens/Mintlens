@@ -9,6 +9,8 @@ import { db, pool } from '../shared/infrastructure/db.js'
 beforeAll(() => {
     process.env['NODE_ENV'] ??= 'test'
     process.env['JWT_SECRET'] ??= 'integration-test-secret-do-not-use-in-prod'
+    process.env['CSRF_HMAC_KEY'] ??= 'integration-test-csrf-key'
+    process.env['API_KEY_SALT'] ??= 'integration-test-api-key-salt'
     process.env['DATABASE_URL'] ??= 'postgresql://mintlens:changeme@localhost:5432/mintlens_dev'
     process.env['REDIS_URL'] ??= 'redis://:changeme@localhost:6379'
 })

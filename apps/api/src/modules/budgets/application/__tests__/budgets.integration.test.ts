@@ -10,6 +10,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import type { FastifyInstance } from 'fastify'
 import { buildApp } from '../../../../app.js'
+import { extractAccessToken, getCsrf, authHeaders, authGetHeaders } from '../../../../test/helpers.js'
 
 let app: FastifyInstance
 
@@ -31,29 +32,26 @@ const SIGNUP_PAYLOAD = {
     organisationName: 'Budget Corp',
 }
 
-function extractCookie(setCookieHeader: string | string[]): string {
-    const header = Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader
-    const match  = header?.match(/access_token=([^;]+)/)
-    if (!match?.[1]) throw new Error('access_token cookie not found')
-    return match[1]
-}
-
-/** Signs up, creates a project, returns { cookie, projectId } */
+/** Signs up, creates a project, returns { accessToken, projectId } */
 async function setupUserAndProject() {
+    const csrf = await getCsrf(app)
     const signupRes = await app.inject({
         method: 'POST',
         url: '/v1/auth/signup',
+        headers: { cookie: csrf.cookie, 'x-csrf-token': csrf.token },
         payload: SIGNUP_PAYLOAD,
     })
-    const cookie    = extractCookie(signupRes.headers['set-cookie']!)
+    const accessToken = extractAccessToken(signupRes.headers['set-cookie']!)
+
+    const csrf2 = await getCsrf(app)
     const projectRes = await app.inject({
-        method:  'POST',
-        url:     '/v1/projects',
-        headers: { cookie: `access_token=${cookie}` },
+        method: 'POST',
+        url: '/v1/projects',
+        headers: authHeaders(accessToken, csrf2),
         payload: { name: 'Test Project', environment: 'production' },
     })
     const projectId = projectRes.json<{ data: { id: string } }>().data.id
-    return { cookie, projectId }
+    return { accessToken, projectId }
 }
 
 const BASE_BUDGET = {
@@ -67,12 +65,13 @@ const BASE_BUDGET = {
 
 describe('POST /v1/budgets', () => {
     it('creates a budget and returns 201 with the new budget', async () => {
-        const { cookie, projectId } = await setupUserAndProject()
+        const { accessToken, projectId } = await setupUserAndProject()
 
+        const csrf = await getCsrf(app)
         const res = await app.inject({
             method:  'POST',
             url:     '/v1/budgets',
-            headers: { cookie: `access_token=${cookie}` },
+            headers: authHeaders(accessToken, csrf),
             payload: { ...BASE_BUDGET, projectId },
         })
 
@@ -86,12 +85,13 @@ describe('POST /v1/budgets', () => {
     })
 
     it('returns 404 when projectId does not belong to the organisation', async () => {
-        const { cookie } = await setupUserAndProject()
+        const { accessToken } = await setupUserAndProject()
 
+        const csrf = await getCsrf(app)
         const res = await app.inject({
             method:  'POST',
             url:     '/v1/budgets',
-            headers: { cookie: `access_token=${cookie}` },
+            headers: authHeaders(accessToken, csrf),
             payload: {
                 ...BASE_BUDGET,
                 projectId: '00000000-0000-0000-0000-000000000000', // unknown
@@ -102,12 +102,13 @@ describe('POST /v1/budgets', () => {
     })
 
     it('returns 400 when required fields are missing', async () => {
-        const { cookie } = await setupUserAndProject()
+        const { accessToken } = await setupUserAndProject()
 
+        const csrf = await getCsrf(app)
         const res = await app.inject({
             method:  'POST',
             url:     '/v1/budgets',
-            headers: { cookie: `access_token=${cookie}` },
+            headers: authHeaders(accessToken, csrf),
             payload: { name: 'Incomplete budget' }, // missing projectId, scope, limitMicro, period
         })
 
@@ -115,9 +116,11 @@ describe('POST /v1/budgets', () => {
     })
 
     it('returns 401 without authentication', async () => {
+        const csrf = await getCsrf(app)
         const res = await app.inject({
             method:  'POST',
             url:     '/v1/budgets',
+            headers: { cookie: csrf.cookie, 'x-csrf-token': csrf.token },
             payload: { ...BASE_BUDGET, projectId: '00000000-0000-0000-0000-000000000000' },
         })
 
@@ -129,26 +132,29 @@ describe('POST /v1/budgets', () => {
 
 describe('GET /v1/budgets', () => {
     it('returns the list of active budgets for a project', async () => {
-        const { cookie, projectId } = await setupUserAndProject()
+        const { accessToken, projectId } = await setupUserAndProject()
 
         // Create two budgets
+        const csrf1 = await getCsrf(app)
         await app.inject({
             method:  'POST',
             url:     '/v1/budgets',
-            headers: { cookie: `access_token=${cookie}` },
+            headers: authHeaders(accessToken, csrf1),
             payload: { ...BASE_BUDGET, projectId, name: 'Budget A' },
         })
+        const csrf2 = await getCsrf(app)
         await app.inject({
             method:  'POST',
             url:     '/v1/budgets',
-            headers: { cookie: `access_token=${cookie}` },
+            headers: authHeaders(accessToken, csrf2),
             payload: { ...BASE_BUDGET, projectId, name: 'Budget B', period: 'daily' },
         })
 
+        const csrf3 = await getCsrf(app)
         const res = await app.inject({
             method:  'GET',
             url:     `/v1/budgets?projectId=${projectId}`,
-            headers: { cookie: `access_token=${cookie}` },
+            headers: authGetHeaders(accessToken, csrf3),
         })
 
         expect(res.statusCode).toBe(200)
@@ -162,12 +168,13 @@ describe('GET /v1/budgets', () => {
     })
 
     it('returns an empty array when the project has no budgets', async () => {
-        const { cookie, projectId } = await setupUserAndProject()
+        const { accessToken, projectId } = await setupUserAndProject()
 
+        const csrf = await getCsrf(app)
         const res = await app.inject({
             method:  'GET',
             url:     `/v1/budgets?projectId=${projectId}`,
-            headers: { cookie: `access_token=${cookie}` },
+            headers: authGetHeaders(accessToken, csrf),
         })
 
         expect(res.statusCode).toBe(200)
@@ -175,12 +182,13 @@ describe('GET /v1/budgets', () => {
     })
 
     it('returns 404 when projectId does not belong to the organisation', async () => {
-        const { cookie } = await setupUserAndProject()
+        const { accessToken } = await setupUserAndProject()
 
+        const csrf = await getCsrf(app)
         const res = await app.inject({
             method:  'GET',
             url:     '/v1/budgets?projectId=00000000-0000-0000-0000-000000000000',
-            headers: { cookie: `access_token=${cookie}` },
+            headers: authGetHeaders(accessToken, csrf),
         })
 
         expect(res.statusCode).toBe(404)
@@ -200,41 +208,45 @@ describe('GET /v1/budgets', () => {
 
 describe('DELETE /v1/budgets/:budgetId', () => {
     it('soft-deletes a budget (isActive becomes false) and returns 204', async () => {
-        const { cookie, projectId } = await setupUserAndProject()
+        const { accessToken, projectId } = await setupUserAndProject()
 
         // Create
+        const csrf1 = await getCsrf(app)
         const createRes = await app.inject({
             method:  'POST',
             url:     '/v1/budgets',
-            headers: { cookie: `access_token=${cookie}` },
+            headers: authHeaders(accessToken, csrf1),
             payload: { ...BASE_BUDGET, projectId },
         })
         const budgetId = createRes.json<{ data: { id: string } }>().data.id
 
         // Delete
+        const csrf2 = await getCsrf(app)
         const deleteRes = await app.inject({
             method:  'DELETE',
             url:     `/v1/budgets/${budgetId}`,
-            headers: { cookie: `access_token=${cookie}` },
+            headers: authHeaders(accessToken, csrf2),
         })
         expect(deleteRes.statusCode).toBe(204)
 
         // Verify it no longer appears in the list (isActive = false)
+        const csrf3 = await getCsrf(app)
         const listRes = await app.inject({
             method:  'GET',
             url:     `/v1/budgets?projectId=${projectId}`,
-            headers: { cookie: `access_token=${cookie}` },
+            headers: authGetHeaders(accessToken, csrf3),
         })
         expect(listRes.json<{ data: unknown[] }>().data).toHaveLength(0)
     })
 
     it('returns 404 for an unknown budget id', async () => {
-        const { cookie } = await setupUserAndProject()
+        const { accessToken } = await setupUserAndProject()
 
+        const csrf = await getCsrf(app)
         const res = await app.inject({
             method:  'DELETE',
             url:     '/v1/budgets/00000000-0000-0000-0000-000000000000',
-            headers: { cookie: `access_token=${cookie}` },
+            headers: authHeaders(accessToken, csrf),
         })
 
         expect(res.statusCode).toBe(404)

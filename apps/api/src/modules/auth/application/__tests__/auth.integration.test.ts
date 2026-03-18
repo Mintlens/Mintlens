@@ -10,6 +10,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import type { FastifyInstance } from 'fastify'
 import { buildApp } from '../../../../app.js'
+import { extractAccessToken, getCsrf, authHeaders } from '../../../../test/helpers.js'
 
 let app: FastifyInstance
 
@@ -31,21 +32,15 @@ const SIGNUP_PAYLOAD = {
     organisationName: 'Test Corp',
 }
 
-/** Returns the access_token cookie value from a set-cookie header */
-function extractCookie(setCookieHeader: string | string[]): string {
-    const header = Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader
-    const match = header?.match(/access_token=([^;]+)/)
-    if (!match?.[1]) throw new Error('access_token cookie not found in response')
-    return match[1]
-}
-
 // ─── Tests ──────────────────────────────────────────────────────────────────
 
 describe('POST /v1/auth/signup', () => {
     it('creates an organisation + user and sets an access_token cookie', async () => {
+        const csrf = await getCsrf(app)
         const res = await app.inject({
             method: 'POST',
             url: '/v1/auth/signup',
+            headers: { cookie: csrf.cookie, 'x-csrf-token': csrf.token },
             payload: SIGNUP_PAYLOAD,
         })
 
@@ -61,19 +56,31 @@ describe('POST /v1/auth/signup', () => {
     })
 
     it('returns 409 if email already exists', async () => {
+        const csrf = await getCsrf(app)
         // First signup
-        await app.inject({ method: 'POST', url: '/v1/auth/signup', payload: SIGNUP_PAYLOAD })
+        await app.inject({
+            method: 'POST', url: '/v1/auth/signup',
+            headers: { cookie: csrf.cookie, 'x-csrf-token': csrf.token },
+            payload: SIGNUP_PAYLOAD,
+        })
 
         // Second signup with same email
-        const res = await app.inject({ method: 'POST', url: '/v1/auth/signup', payload: SIGNUP_PAYLOAD })
+        const csrf2 = await getCsrf(app)
+        const res = await app.inject({
+            method: 'POST', url: '/v1/auth/signup',
+            headers: { cookie: csrf2.cookie, 'x-csrf-token': csrf2.token },
+            payload: SIGNUP_PAYLOAD,
+        })
         expect(res.statusCode).toBe(409)
         expect(res.json().error.code).toBe('CONFLICT')
     })
 
     it('returns 400 if required fields are missing', async () => {
+        const csrf = await getCsrf(app)
         const res = await app.inject({
             method: 'POST',
             url: '/v1/auth/signup',
+            headers: { cookie: csrf.cookie, 'x-csrf-token': csrf.token },
             payload: { email: 'incomplete@test.com' }, // missing fields
         })
         expect(res.statusCode).toBe(400)
@@ -83,11 +90,18 @@ describe('POST /v1/auth/signup', () => {
 describe('POST /v1/auth/login', () => {
     it('logs in an existing user and sets access_token cookie', async () => {
         // Create user first
-        await app.inject({ method: 'POST', url: '/v1/auth/signup', payload: SIGNUP_PAYLOAD })
+        const csrf = await getCsrf(app)
+        await app.inject({
+            method: 'POST', url: '/v1/auth/signup',
+            headers: { cookie: csrf.cookie, 'x-csrf-token': csrf.token },
+            payload: SIGNUP_PAYLOAD,
+        })
 
+        const csrf2 = await getCsrf(app)
         const res = await app.inject({
             method: 'POST',
             url: '/v1/auth/login',
+            headers: { cookie: csrf2.cookie, 'x-csrf-token': csrf2.token },
             payload: { email: SIGNUP_PAYLOAD.email, password: SIGNUP_PAYLOAD.password },
         })
 
@@ -96,11 +110,18 @@ describe('POST /v1/auth/login', () => {
     })
 
     it('returns 401 for wrong password', async () => {
-        await app.inject({ method: 'POST', url: '/v1/auth/signup', payload: SIGNUP_PAYLOAD })
+        const csrf = await getCsrf(app)
+        await app.inject({
+            method: 'POST', url: '/v1/auth/signup',
+            headers: { cookie: csrf.cookie, 'x-csrf-token': csrf.token },
+            payload: SIGNUP_PAYLOAD,
+        })
 
+        const csrf2 = await getCsrf(app)
         const res = await app.inject({
             method: 'POST',
             url: '/v1/auth/login',
+            headers: { cookie: csrf2.cookie, 'x-csrf-token': csrf2.token },
             payload: { email: SIGNUP_PAYLOAD.email, password: 'wrong-password' },
         })
 
@@ -108,9 +129,11 @@ describe('POST /v1/auth/login', () => {
     })
 
     it('returns 401 for unknown email', async () => {
+        const csrf = await getCsrf(app)
         const res = await app.inject({
             method: 'POST',
             url: '/v1/auth/login',
+            headers: { cookie: csrf.cookie, 'x-csrf-token': csrf.token },
             payload: { email: 'ghost@test.com', password: 'doesntmatter' },
         })
         expect(res.statusCode).toBe(401)
@@ -120,26 +143,31 @@ describe('POST /v1/auth/login', () => {
 describe('POST /v1/auth/api-keys', () => {
     it('generates an API key for an authenticated user with a project', async () => {
         // 1. Signup
+        const csrf = await getCsrf(app)
         const signupRes = await app.inject({
-            method: 'POST', url: '/v1/auth/signup', payload: SIGNUP_PAYLOAD,
+            method: 'POST', url: '/v1/auth/signup',
+            headers: { cookie: csrf.cookie, 'x-csrf-token': csrf.token },
+            payload: SIGNUP_PAYLOAD,
         })
-        const accessToken = extractCookie(signupRes.headers['set-cookie']!)
+        const accessToken = extractAccessToken(signupRes.headers['set-cookie']!)
 
         // 2. Create a project
+        const csrf2 = await getCsrf(app)
         const projectRes = await app.inject({
             method: 'POST',
             url: '/v1/projects',
-            headers: { cookie: `access_token=${accessToken}` },
+            headers: authHeaders(accessToken, csrf2),
             payload: { name: 'My Test App', environment: 'production' },
         })
         expect(projectRes.statusCode).toBe(201)
         const projectId = projectRes.json<{ data: { id: string } }>().data.id
 
         // 3. Generate API key
+        const csrf3 = await getCsrf(app)
         const keyRes = await app.inject({
             method: 'POST',
             url: '/v1/auth/api-keys',
-            headers: { cookie: `access_token=${accessToken}` },
+            headers: authHeaders(accessToken, csrf3),
             payload: { projectId, name: 'My SDK Key' },
         })
 
@@ -153,9 +181,11 @@ describe('POST /v1/auth/api-keys', () => {
     })
 
     it('returns 401 without authentication', async () => {
+        const csrf = await getCsrf(app)
         const res = await app.inject({
             method: 'POST',
             url: '/v1/auth/api-keys',
+            headers: { cookie: csrf.cookie, 'x-csrf-token': csrf.token },
             payload: { projectId: 'some-uuid', name: 'Key' },
         })
         expect(res.statusCode).toBe(401)
