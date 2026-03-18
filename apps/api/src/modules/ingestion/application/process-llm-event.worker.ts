@@ -116,6 +116,10 @@ export function startLlmEventsWorker() {
         budgetKeys.push(`budget:tenant:${tenantId}:daily:${today}`)
         budgetKeys.push(`budget:tenant:${tenantId}:monthly:${month}`)
       }
+      if (featureId) {
+        budgetKeys.push(`budget:feature:${featureId}:daily:${today}`)
+        budgetKeys.push(`budget:feature:${featureId}:monthly:${month}`)
+      }
 
       try {
         const pipeline = redis.pipeline()

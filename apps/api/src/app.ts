@@ -108,6 +108,9 @@ export async function buildApp() {
   // Bearer-token routes (ingestion) are exempt — they carry their own credential.
   const { default: csrfPlugin } = await import('@fastify/csrf-protection')
   const csrfHmacKey = process.env['CSRF_HMAC_KEY'] ?? 'dev-csrf-key-change-in-production'
+  if (process.env['NODE_ENV'] === 'production' && (!process.env['CSRF_HMAC_KEY'] || csrfHmacKey === 'dev-csrf-key-change-in-production')) {
+    throw new Error('CSRF_HMAC_KEY must be set to a secure value in production')
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await app.register(csrfPlugin as any, {
     sessionPlugin: '@fastify/cookie',

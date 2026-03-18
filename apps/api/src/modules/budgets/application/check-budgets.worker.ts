@@ -10,7 +10,7 @@
 import { Queue, Worker } from 'bullmq'
 import { eq, and, isNull } from 'drizzle-orm'
 import { db } from '../../../shared/infrastructure/db.js'
-import { budgets, budgetAlerts, projects } from '#schema'
+import { budgets, budgetAlerts, projects, users } from '#schema'
 import { redis, getBullMQConnection } from '../../../shared/infrastructure/redis.js'
 import { logger } from '../../../shared/logger/logger.js'
 import { sendBudgetAlertEmail } from './budget-alert.service.js'
@@ -44,9 +44,10 @@ async function checkAllBudgets() {
     .select()
     .from(budgets)
     .innerJoin(projects, eq(budgets.projectId, projects.id))
+    .innerJoin(users, and(eq(users.organisationId, projects.organisationId), eq(users.role, 'owner')))
     .where(and(eq(budgets.isActive, true), isNull(projects.deletedAt)))
 
-  for (const { budgets: b, projects: p } of activeBudgets) {
+  for (const { budgets: b, projects: p, users: u } of activeBudgets) {
     try {
       const key          = spendKey(b)
       const spentRaw     = await redis.get(key)
@@ -75,7 +76,7 @@ async function checkAllBudgets() {
           budgetId:  b.id,
           threshold,
           channel:   'email',
-          recipient: p.name, // placeholder — real email from user table in next iteration
+          recipient: u.email,
           period,
           firedAt:   new Date(),
         })
@@ -87,6 +88,7 @@ async function checkAllBudgets() {
           spentMicro,
           limitMicro:   b.limitMicro,
           projectName:  p.name,
+          recipient:    u.email,
         })
 
         logger.info(

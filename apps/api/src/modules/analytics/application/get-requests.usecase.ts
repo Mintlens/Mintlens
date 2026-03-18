@@ -1,8 +1,11 @@
-import { sql, SQL } from 'drizzle-orm'
+import { sql, SQL, and, eq } from 'drizzle-orm'
 import { db } from '../../../shared/infrastructure/db.js'
+import { projects } from '#schema'
+import { NotFoundError } from '../../../shared/errors/app-errors.js'
 
 export interface RequestFilters {
   projectId: string
+  organisationId: string
   from: Date
   to: Date
   limit: number
@@ -76,6 +79,11 @@ function buildWhere(f: RequestFilters): SQL[] {
 }
 
 export async function getRequestsUseCase(f: RequestFilters): Promise<RequestsPage> {
+  const [project] = await db.select({ id: projects.id }).from(projects)
+    .where(and(eq(projects.id, f.projectId), eq(projects.organisationId, f.organisationId)))
+    .limit(1)
+  if (!project) throw new NotFoundError('Project', f.projectId)
+
   const conds = buildWhere(f)
   const where = sql.join(conds, sql` AND `)
 

@@ -33,7 +33,8 @@ export async function analyticsRoutes(app: FastifyInstance) {
     const rangeMs = q.to.getTime() - q.from.getTime()
     const previous = { from: new Date(q.from.getTime() - rangeMs), to: q.from }
 
-    const summary = await getSummaryUseCase(q.projectId, { from: q.from, to: q.to }, previous)
+    const { organisationId } = req.user!
+    const summary = await getSummaryUseCase(q.projectId, organisationId, { from: q.from, to: q.to }, previous)
 
     return reply.send({
       data: {
@@ -53,11 +54,13 @@ export async function analyticsRoutes(app: FastifyInstance) {
   }, async (req, reply) => {
     const q = withProject.merge(costExplorerQuery).parse(req.query)
 
+    const { organisationId } = req.user!
     const result = await getCostExplorerUseCase({
-      projectId:   q.projectId,
-      from:        q.from,
-      to:          q.to,
-      granularity: q.granularity,
+      projectId:      q.projectId,
+      organisationId,
+      from:           q.from,
+      to:             q.to,
+      granularity:    q.granularity,
       ...(q.featureKey  !== undefined ? { featureKey:  q.featureKey }  : {}),
       ...(q.tenantId    !== undefined ? { tenantId:    q.tenantId }    : {}),
       ...(q.provider    !== undefined ? { provider:    q.provider }    : {}),
@@ -78,8 +81,9 @@ export async function analyticsRoutes(app: FastifyInstance) {
   }, async (req, reply) => {
     const q = withProject.merge(tenantsOverviewQuery).parse(req.query)
 
+    const { organisationId } = req.user!
     const tenants = await getTenantsOverviewUseCase(
-      q.projectId, q.from, q.to, q.limit, q.offset,
+      q.projectId, organisationId, q.from, q.to, q.limit, q.offset,
     )
 
     return reply.send({ data: tenants })
@@ -95,12 +99,14 @@ export async function analyticsRoutes(app: FastifyInstance) {
   }, async (req, reply) => {
     const q = withProject.merge(requestsQuery).parse(req.query)
 
+    const { organisationId } = req.user!
     const result = await getRequestsUseCase({
-      projectId:   q.projectId,
-      from:        q.from,
-      to:          q.to,
-      limit:       q.limit,
-      offset:      q.offset,
+      projectId:      q.projectId,
+      organisationId,
+      from:           q.from,
+      to:             q.to,
+      limit:          q.limit,
+      offset:         q.offset,
       ...(q.provider    !== undefined ? { provider:    q.provider }    : {}),
       ...(q.model       !== undefined ? { model:       q.model }       : {}),
       ...(q.featureKey  !== undefined ? { featureKey:  q.featureKey }  : {}),

@@ -1,5 +1,7 @@
-import { sql } from 'drizzle-orm'
+import { sql, and, eq } from 'drizzle-orm'
 import { db } from '../../../shared/infrastructure/db.js'
+import { projects } from '#schema'
+import { NotFoundError } from '../../../shared/errors/app-errors.js'
 import type { TenantOverview } from '../domain/analytics.types.js'
 
 type TenantRow = {
@@ -16,11 +18,17 @@ type TenantRow = {
 
 export async function getTenantsOverviewUseCase(
   projectId: string,
+  organisationId: string,
   from: Date,
   to: Date,
   limit = 100,
   offset = 0,
 ): Promise<TenantOverview[]> {
+  const [project] = await db.select({ id: projects.id }).from(projects)
+    .where(and(eq(projects.id, projectId), eq(projects.organisationId, organisationId)))
+    .limit(1)
+  if (!project) throw new NotFoundError('Project', projectId)
+
   const rows = await db.execute<TenantRow>(sql`
     SELECT
       t.id                                              AS tenant_id,

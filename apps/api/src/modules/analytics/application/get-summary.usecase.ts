@@ -1,12 +1,20 @@
-import { sql } from 'drizzle-orm'
+import { sql, and, eq } from 'drizzle-orm'
 import { db } from '../../../shared/infrastructure/db.js'
+import { projects } from '#schema'
+import { NotFoundError } from '../../../shared/errors/app-errors.js'
 import type { AnalyticsSummary, DateRange } from '../domain/analytics.types.js'
 
 export async function getSummaryUseCase(
   projectId: string,
+  organisationId: string,
   current: DateRange,
   previous: DateRange,
 ): Promise<AnalyticsSummary> {
+  const [project] = await db.select({ id: projects.id }).from(projects)
+    .where(and(eq(projects.id, projectId), eq(projects.organisationId, organisationId)))
+    .limit(1)
+  if (!project) throw new NotFoundError('Project', projectId)
+
   // Current period
   const curResult = await db.execute<{
     total_cost_micro: string

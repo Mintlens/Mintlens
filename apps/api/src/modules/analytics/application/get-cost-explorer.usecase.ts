@@ -1,5 +1,7 @@
-import { sql, SQL } from 'drizzle-orm'
+import { sql, SQL, and, eq } from 'drizzle-orm'
 import { db } from '../../../shared/infrastructure/db.js'
+import { projects } from '#schema'
+import { NotFoundError } from '../../../shared/errors/app-errors.js'
 import type { CostExplorerResult, CostExplorerFilters, CostByDimension } from '../domain/analytics.types.js'
 
 type TimeSeriesRow = {
@@ -63,6 +65,11 @@ function toDimensions(rows: DimensionRow[], totalCost: number): CostByDimension[
 }
 
 export async function getCostExplorerUseCase(f: CostExplorerFilters): Promise<CostExplorerResult> {
+  const [project] = await db.select({ id: projects.id }).from(projects)
+    .where(and(eq(projects.id, f.projectId), eq(projects.organisationId, f.organisationId)))
+    .limit(1)
+  if (!project) throw new NotFoundError('Project', f.projectId)
+
   const conds        = buildConditions(f)
   const condsAliased = buildConditions(f, 'lr')
   const where        = sql.join(conds, sql` AND `)
