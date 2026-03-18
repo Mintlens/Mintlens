@@ -4,7 +4,7 @@ import { Suspense, useState } from 'react'
 import { Key, Plus, Copy, Check, AlertTriangle, Trash2 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api-client'
-import { useAuthStore } from '@/store/auth.store'
+import { useReadyProject } from '@/hooks/use-ready-project'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatDate } from '@/lib/format'
@@ -71,7 +71,7 @@ function useRevokeApiKey() {
 /* ------------------------------------------------------------------ */
 
 function ApiKeysContent() {
-  const projectId = useAuthStore((s) => s.selectedProjectId)
+  const { projectId, waiting } = useReadyProject()
   const { data: keys, isLoading } = useApiKeys(projectId)
   const createKey = useCreateApiKey()
   const revokeKey = useRevokeApiKey()
@@ -81,10 +81,21 @@ function ApiKeysContent() {
   const [createdKey, setCreatedKey]   = useState<string | null>(null)
   const [copied, setCopied]           = useState(false)
 
+  if (waiting || isLoading) {
+    return (
+      <div className="space-y-6 p-6">
+        <Skeleton className="h-6 w-40" />
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
+        </div>
+      </div>
+    )
+  }
+
   if (!projectId) {
     return (
       <div className="flex h-64 items-center justify-center text-sm text-slate-400">
-        Select a project above to manage API keys
+        No projects found
       </div>
     )
   }
@@ -130,13 +141,10 @@ function ApiKeysContent() {
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-base font-semibold text-slate-900">API Keys</h2>
-          <p className="text-sm text-slate-400">
-            {activeKeys.length} active key{activeKeys.length !== 1 ? 's' : ''}
-          </p>
-        </div>
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-sm text-slate-400">
+          {activeKeys.length} active key{activeKeys.length !== 1 ? 's' : ''}
+        </p>
         <button
           onClick={() => { setShowCreate(!showCreate); setCreatedKey(null) }}
           className="inline-flex items-center gap-1.5 rounded-xl bg-mint-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-mint-600 hover:shadow-md active:scale-[0.98]"

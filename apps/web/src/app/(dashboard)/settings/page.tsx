@@ -23,10 +23,7 @@ function SettingsContent() {
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h2 className="text-base font-semibold text-slate-900">Settings</h2>
-        <p className="text-sm text-slate-400">Manage your account and preferences</p>
-      </div>
+      <div className="mb-2" />
 
       <div className="flex gap-6">
         {/* Left nav */}

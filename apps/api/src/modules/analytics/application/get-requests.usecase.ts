@@ -2,7 +2,8 @@ import { sql, SQL } from 'drizzle-orm'
 import { db } from '../../../shared/infrastructure/db.js'
 
 export interface RequestFilters {
-  projectId: string
+  projectId?: string
+  organisationId?: string
   from: Date
   to: Date
   limit: number
@@ -61,10 +62,14 @@ type CountRow = {
 
 function buildWhere(f: RequestFilters): SQL[] {
   const conds: SQL[] = [
-    sql`lr.project_id  = ${f.projectId}::uuid`,
     sql`lr.created_at >= ${f.from.toISOString()}`,
     sql`lr.created_at <  ${f.to.toISOString()}`,
   ]
+  if (f.projectId) {
+    conds.push(sql`lr.project_id = ${f.projectId}::uuid`)
+  } else if (f.organisationId) {
+    conds.push(sql`lr.project_id IN (SELECT id FROM projects WHERE organisation_id = ${f.organisationId}::uuid)`)
+  }
   if (f.provider)    conds.push(sql`lr.provider::text = ${f.provider}`)
   if (f.model)       conds.push(sql`lr.model ILIKE ${'%' + f.model + '%'}`)
   if (f.environment) conds.push(sql`lr.environment = ${f.environment}`)

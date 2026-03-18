@@ -9,6 +9,7 @@ import { summaryQuery, costExplorerQuery, tenantsOverviewQuery, requestsQuery } 
 import { microToUsd } from '../../ingestion/application/cost-calculator.js'
 
 const withProject = z.object({ projectId: z.string().uuid() })
+const withOptionalProject = z.object({ projectId: z.string().uuid().optional() })
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
 
@@ -21,19 +22,25 @@ export async function analyticsRoutes(app: FastifyInstance) {
   })
 
   /**
-   * GET /v1/analytics/summary?projectId=&from=&to=
+   * GET /v1/analytics/summary?from=&to=  (org-wide)
+   * GET /v1/analytics/summary?projectId=&from=&to=  (per-project)
    * KPI cards: total cost, tokens, requests, avg latency, %-change vs prior period.
    */
   app.get('/summary', {
     schema: { tags: ['Analytics'], summary: 'KPI summary (cost, tokens, requests, latency)', security: [{ cookieAuth: [] }] },
     preHandler: [requireAuth],
   }, async (req, reply) => {
-    const q = withProject.merge(summaryQuery).parse(req.query)
+    const q = withOptionalProject.merge(summaryQuery).parse(req.query)
+    const { organisationId } = req.user!
 
     const rangeMs = q.to.getTime() - q.from.getTime()
     const previous = { from: new Date(q.from.getTime() - rangeMs), to: q.from }
 
-    const summary = await getSummaryUseCase(q.projectId, { from: q.from, to: q.to }, previous)
+    const scope = q.projectId
+      ? { projectId: q.projectId }
+      : { organisationId }
+
+    const summary = await getSummaryUseCase(scope, { from: q.from, to: q.to }, previous)
 
     return reply.send({
       data: {
@@ -44,17 +51,19 @@ export async function analyticsRoutes(app: FastifyInstance) {
   })
 
   /**
-   * GET /v1/analytics/cost-explorer?projectId=&from=&to=&granularity=day&...
+   * GET /v1/analytics/cost-explorer?from=&to=&granularity=day  (org-wide)
+   * GET /v1/analytics/cost-explorer?projectId=&from=&to=&granularity=day&...  (per-project)
    * Time series + breakdowns by model, feature, provider.
    */
   app.get('/cost-explorer', {
     schema: { tags: ['Analytics'], summary: 'Cost time-series with breakdowns', security: [{ cookieAuth: [] }] },
     preHandler: [requireAuth],
   }, async (req, reply) => {
-    const q = withProject.merge(costExplorerQuery).parse(req.query)
+    const q = withOptionalProject.merge(costExplorerQuery).parse(req.query)
+    const { organisationId } = req.user!
 
     const result = await getCostExplorerUseCase({
-      projectId:   q.projectId,
+      ...(q.projectId ? { projectId: q.projectId } : { organisationId }),
       from:        q.from,
       to:          q.to,
       granularity: q.granularity,
@@ -76,11 +85,14 @@ export async function analyticsRoutes(app: FastifyInstance) {
     schema: { tags: ['Analytics'], summary: 'Per-tenant cost & revenue overview', security: [{ cookieAuth: [] }] },
     preHandler: [requireAuth],
   }, async (req, reply) => {
-    const q = withProject.merge(tenantsOverviewQuery).parse(req.query)
+    const q = withOptionalProject.merge(tenantsOverviewQuery).parse(req.query)
+    const { organisationId } = req.user!
 
-    const tenants = await getTenantsOverviewUseCase(
-      q.projectId, q.from, q.to, q.limit, q.offset,
-    )
+    const scope = q.projectId
+      ? { projectId: q.projectId }
+      : { organisationId }
+
+    const tenants = await getTenantsOverviewUseCase(scope, q.from, q.to, q.limit, q.offset)
 
     return reply.send({ data: tenants })
   })
@@ -93,10 +105,11 @@ export async function analyticsRoutes(app: FastifyInstance) {
     schema: { tags: ['Analytics'], summary: 'Paginated LLM request logs', security: [{ cookieAuth: [] }] },
     preHandler: [requireAuth],
   }, async (req, reply) => {
-    const q = withProject.merge(requestsQuery).parse(req.query)
+    const q = withOptionalProject.merge(requestsQuery).parse(req.query)
+    const { organisationId } = req.user!
 
     const result = await getRequestsUseCase({
-      projectId:   q.projectId,
+      ...(q.projectId ? { projectId: q.projectId } : { organisationId }),
       from:        q.from,
       to:          q.to,
       limit:       q.limit,

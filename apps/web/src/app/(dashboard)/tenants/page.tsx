@@ -3,7 +3,7 @@
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Users, Search, ArrowUpDown } from 'lucide-react'
-import { useAuthStore } from '@/store/auth.store'
+// Org-wide by default — no project selection needed
 import { useTenants } from '@/hooks/use-analytics'
 import { TenantRow } from '@/components/tenants/tenant-row'
 import { TenantsSkeleton } from '@/components/tenants/tenants-skeleton'
@@ -58,21 +58,11 @@ function TenantsContent() {
   const sp        = useSearchParams()
   const from      = sp.get('from') ?? defaultFrom()
   const to        = sp.get('to')   ?? defaultTo()
-  const projectId = useAuthStore((s) => s.selectedProjectId)
-
-  const { data: tenants, isLoading } = useTenants(projectId, from, to)
+  const { data: tenants, isLoading } = useTenants(null, from, to)
 
   const [search, setSearch]   = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('cost')
   const [sortAsc, setSortAsc] = useState(false)
-
-  if (!projectId) {
-    return (
-      <div className="flex h-64 items-center justify-center text-sm text-slate-400">
-        Select a project above
-      </div>
-    )
-  }
 
   if (isLoading && !tenants) {
     return <TenantsSkeleton />
@@ -106,13 +96,10 @@ function TenantsContent() {
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-base font-semibold text-slate-900">Tenants</h2>
-          <p className="text-sm text-slate-400">
-            {filtered.length} tenant{filtered.length !== 1 ? 's' : ''} · {from} → {to}
-          </p>
-        </div>
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-sm text-slate-400">
+          {filtered.length} tenant{filtered.length !== 1 ? 's' : ''} · {from} → {to}
+        </p>
 
         {/* Search */}
         <div className="relative">

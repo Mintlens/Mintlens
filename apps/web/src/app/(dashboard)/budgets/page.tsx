@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense } from 'react'
-import { useAuthStore } from '@/store/auth.store'
+import { useReadyProject } from '@/hooks/use-ready-project'
 import { useBudgets, useDeleteBudget } from '@/hooks/use-budgets'
 import { BudgetCard } from '@/components/budgets/budget-card'
 import { BudgetsSkeleton } from '@/components/budgets/budgets-skeleton'
@@ -9,14 +9,16 @@ import { CreateBudgetDialog } from '@/components/budgets/create-budget-dialog'
 import { Wallet } from 'lucide-react'
 
 function BudgetsContent() {
-  const projectId = useAuthStore((s) => s.selectedProjectId)
+  const { projectId, waiting } = useReadyProject()
   const { data: budgets, isLoading } = useBudgets(projectId)
   const { mutate: deleteBudget, isPending: deleting } = useDeleteBudget()
+
+  if (waiting) return <BudgetsSkeleton />
 
   if (!projectId) {
     return (
       <div className="flex h-64 items-center justify-center text-sm text-slate-400">
-        Select a project above
+        No projects found
       </div>
     )
   }
@@ -24,11 +26,7 @@ function BudgetsContent() {
   return (
     <div className="space-y-6 p-6">
       {/* Page header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-base font-semibold text-slate-900">Budgets</h2>
-          <p className="text-sm text-slate-400">Manage spend limits and alert thresholds</p>
-        </div>
+      <div className="flex items-center justify-end">
         <CreateBudgetDialog projectId={projectId} />
       </div>
 

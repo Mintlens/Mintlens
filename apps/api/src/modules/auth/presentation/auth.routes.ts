@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { eq } from 'drizzle-orm'
 import type { FastifyInstance } from 'fastify'
 import { signupUseCase } from '../application/signup.usecase.js'
 import { loginUseCase } from '../application/login.usecase.js'
@@ -6,6 +7,8 @@ import { generateApiKeyUseCase } from '../application/generate-api-key.usecase.j
 import { listApiKeysUseCase, revokeApiKeyUseCase } from '../application/list-api-keys.usecase.js'
 import { requireAuth } from '../../../shared/middleware/require-auth.js'
 import { validateBody } from '../../../shared/middleware/validate-body.js'
+import { db } from '../../../shared/infrastructure/db.js'
+import { users, organisations } from '#schema'
 import {
   signupBody,
   loginBody,
@@ -35,6 +38,47 @@ export async function authRoutes(app: FastifyInstance) {
     // generateCsrf() is typed as returning FastifyReply in v4 @types but actually returns string
     const token = await (reply.generateCsrf() as unknown as Promise<string>)
     return reply.send({ data: { csrfToken: token } })
+  })
+
+  /**
+   * GET /v1/auth/me
+   * Returns the authenticated user's profile + organisation name.
+   */
+  app.get('/me', {
+    schema: { tags: ['Auth'], summary: 'Get current user profile', security: [{ cookieAuth: [] }] },
+    preHandler: [requireAuth],
+  }, async (req, reply) => {
+    const { userId, organisationId } = req.user!
+
+    const [row] = await db
+      .select({
+        id:         users.id,
+        email:      users.email,
+        firstName:  users.firstName,
+        lastName:   users.lastName,
+        role:       users.role,
+        orgName:    organisations.name,
+      })
+      .from(users)
+      .innerJoin(organisations, eq(users.organisationId, organisations.id))
+      .where(eq(users.id, userId))
+      .limit(1)
+
+    if (!row) {
+      return reply.status(404).send({ error: 'User not found' })
+    }
+
+    return reply.send({
+      data: {
+        id:               row.id,
+        email:            row.email,
+        firstName:        row.firstName,
+        lastName:         row.lastName,
+        role:             row.role,
+        organisationId,
+        organisationName: row.orgName,
+      },
+    })
   })
 
   /**

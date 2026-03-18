@@ -15,12 +15,18 @@ type TenantRow = {
 }
 
 export async function getTenantsOverviewUseCase(
-  projectId: string,
+  scope: { projectId?: string; organisationId?: string },
   from: Date,
   to: Date,
   limit = 100,
   offset = 0,
 ): Promise<TenantOverview[]> {
+  const projectFilter = scope.projectId
+    ? sql`t.project_id = ${scope.projectId}::uuid`
+    : scope.organisationId
+      ? sql`t.project_id IN (SELECT id FROM projects WHERE organisation_id = ${scope.organisationId}::uuid)`
+      : sql`1=0`
+
   const rows = await db.execute<TenantRow>(sql`
     SELECT
       t.id                                              AS tenant_id,
@@ -36,7 +42,7 @@ export async function getTenantsOverviewUseCase(
            ON lr.tenant_id  = t.id
           AND lr.created_at >= ${from.toISOString()}
           AND lr.created_at <  ${to.toISOString()}
-    WHERE t.project_id = ${projectId}::uuid
+    WHERE ${projectFilter}
     GROUP BY t.id, t.external_ref, t.name
     ORDER BY SUM(lr.cost_total_micro) DESC NULLS LAST
     LIMIT ${limit} OFFSET ${offset}

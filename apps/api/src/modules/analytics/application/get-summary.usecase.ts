@@ -1,12 +1,35 @@
-import { sql } from 'drizzle-orm'
+import { sql, type SQL } from 'drizzle-orm'
 import { db } from '../../../shared/infrastructure/db.js'
 import type { AnalyticsSummary, DateRange } from '../domain/analytics.types.js'
 
+interface SummaryScope {
+  projectId?: string
+  organisationId?: string
+}
+
+/**
+ * Builds the project filter clause.
+ * - When `projectId` is given → filter by single project.
+ * - When only `organisationId` is given → filter across ALL projects in the org.
+ */
+function projectFilter(scope: SummaryScope): SQL {
+  if (scope.projectId) {
+    return sql`project_id = ${scope.projectId}::uuid`
+  }
+  return sql`project_id IN (
+    SELECT id FROM projects
+    WHERE organisation_id = ${scope.organisationId!}::uuid
+      AND deleted_at IS NULL
+  )`
+}
+
 export async function getSummaryUseCase(
-  projectId: string,
+  scope: SummaryScope,
   current: DateRange,
   previous: DateRange,
 ): Promise<AnalyticsSummary> {
+  const pFilter = projectFilter(scope)
+
   // Current period
   const curResult = await db.execute<{
     total_cost_micro: string
@@ -21,9 +44,9 @@ export async function getSummaryUseCase(
       COUNT(*)::text                              AS total_requests,
       AVG(latency_ms)::text                       AS avg_latency_ms
     FROM llm_requests
-    WHERE project_id   = ${projectId}::uuid
-      AND created_at  >= ${current.from.toISOString()}
-      AND created_at  <  ${current.to.toISOString()}
+    WHERE ${pFilter}
+      AND created_at >= ${current.from.toISOString()}
+      AND created_at <  ${current.to.toISOString()}
   `)
   const cur = curResult.rows[0]
 
@@ -31,9 +54,9 @@ export async function getSummaryUseCase(
   const prevResult = await db.execute<{ prev_cost: string; [key: string]: unknown }>(sql`
     SELECT COALESCE(SUM(cost_total_micro), 0)::text AS prev_cost
     FROM llm_requests
-    WHERE project_id   = ${projectId}::uuid
-      AND created_at  >= ${previous.from.toISOString()}
-      AND created_at  <  ${previous.to.toISOString()}
+    WHERE ${pFilter}
+      AND created_at >= ${previous.from.toISOString()}
+      AND created_at <  ${previous.to.toISOString()}
   `)
   const prev = prevResult.rows[0]
 
