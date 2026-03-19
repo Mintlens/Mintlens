@@ -67,6 +67,43 @@ export async function createProjectUseCase(
   return created!
 }
 
+export async function updateProjectUseCase(
+  organisationId: string,
+  projectId: string,
+  input: { name?: string | undefined; environment?: string | undefined },
+) {
+  const project = await getProjectUseCase(organisationId, projectId)
+
+  const updates: Record<string, unknown> = { updatedAt: new Date() }
+  if (input.name !== undefined) {
+    updates.name = input.name
+    updates.slug = slugify(input.name)
+  }
+  if (input.environment !== undefined) {
+    updates.environment = input.environment
+  }
+
+  const [updated] = await db
+    .update(projects)
+    .set(updates)
+    .where(eq(projects.id, projectId))
+    .returning()
+
+  return updated!
+}
+
+export async function deleteProjectUseCase(
+  organisationId: string,
+  projectId: string,
+) {
+  await getProjectUseCase(organisationId, projectId)
+
+  await db
+    .update(projects)
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(eq(projects.id, projectId))
+}
+
 export async function listFeaturesWithCostUseCase(
   organisationId: string,
   projectId: string,

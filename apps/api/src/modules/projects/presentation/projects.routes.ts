@@ -5,6 +5,8 @@ import {
   listProjectsUseCase,
   getProjectUseCase,
   createProjectUseCase,
+  updateProjectUseCase,
+  deleteProjectUseCase,
   listFeaturesWithCostUseCase,
 } from '../application/projects.usecase.js'
 
@@ -83,6 +85,44 @@ export async function projectsRoutes(app: FastifyInstance) {
       const { organisationId } = req.user!
       const project = await getProjectUseCase(organisationId, req.params.projectId)
       return reply.send({ data: project })
+    },
+  )
+
+  /**
+   * PATCH /v1/projects/:projectId
+   * Update a project (name, environment).
+   */
+  app.patch<{ Params: { projectId: string } }>(
+    '/:projectId',
+    {
+      schema: { params: projectParams, tags: ['Projects'], summary: 'Update a project', security: [{ cookieAuth: [] }] },
+      preHandler: [requireAuth],
+    },
+    async (req, reply) => {
+      const { organisationId } = req.user!
+      const body = z.object({
+        name: z.string().min(2).max(100).optional(),
+        environment: z.enum(['production', 'staging', 'development']).optional(),
+      }).parse(req.body)
+      const updated = await updateProjectUseCase(organisationId, req.params.projectId, body)
+      return reply.send({ data: updated })
+    },
+  )
+
+  /**
+   * DELETE /v1/projects/:projectId
+   * Soft-delete a project (sets deletedAt).
+   */
+  app.delete<{ Params: { projectId: string } }>(
+    '/:projectId',
+    {
+      schema: { params: projectParams, tags: ['Projects'], summary: 'Delete a project', security: [{ cookieAuth: [] }] },
+      preHandler: [requireAuth],
+    },
+    async (req, reply) => {
+      const { organisationId } = req.user!
+      await deleteProjectUseCase(organisationId, req.params.projectId)
+      return reply.status(204).send()
     },
   )
 
