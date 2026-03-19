@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { Download } from 'lucide-react'
 import { useCostExplorer } from '@/hooks/use-analytics'
 import { CostChart } from '@/components/cost-explorer/cost-chart'
 import { BreakdownTable } from '@/components/cost-explorer/breakdown-table'
@@ -38,7 +39,34 @@ function CostExplorerContent() {
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between gap-4">
-        <p className="text-sm text-slate-400">{from} → {to}</p>
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-slate-400">{from} → {to}</p>
+          {data && data.timeSeries.length > 0 && (
+            <button
+              onClick={async () => {
+                const base = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001'
+                const qs = new URLSearchParams({
+                  from: `${from}T00:00:00Z`, to: `${to}T23:59:59Z`,
+                  granularity, format: 'csv',
+                  ...(provider ? { provider } : {}),
+                  ...(model ? { model } : {}),
+                })
+                const res = await fetch(`${base}/v1/analytics/cost-explorer?${qs}`, { credentials: 'include' })
+                const blob = await res.blob()
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `mintlens-cost-${from}-${to}.csv`
+                a.click()
+                URL.revokeObjectURL(url)
+              }}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-100 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Export CSV
+            </button>
+          )}
+        </div>
         <FiltersBar
           granularity={granularity}
           onGranularity={setGranularity}
