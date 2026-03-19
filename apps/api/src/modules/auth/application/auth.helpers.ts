@@ -25,14 +25,14 @@ export function issueTokens(
     exp: now + JWT_TTL_SECONDS,
   }
 
-  const accessToken = jwt.sign(payload, JWT_SECRET)
+  const accessToken = jwt.sign(payload, JWT_SECRET, { algorithm: 'HS256' })
   const expiresAt = new Date((now + JWT_TTL_SECONDS) * 1000).toISOString()
 
   return { accessToken, expiresAt }
 }
 
 export function verifyToken(token: string): JwtPayload {
-  return jwt.verify(token, JWT_SECRET) as JwtPayload
+  return jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }) as JwtPayload
 }
 
 /** Convert an org/user name to a URL-safe slug */
