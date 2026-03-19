@@ -71,7 +71,8 @@ export function Sidebar() {
   async function logout() {
     try {
       await apiFetch('/v1/auth/logout', { method: 'POST' })
-    } catch { /* ignore */ }
+    } catch { /* ignore — cookie cleared client-side regardless */ }
+    document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
     invalidateCsrfToken()
     clearProject()
     router.push('/login')
