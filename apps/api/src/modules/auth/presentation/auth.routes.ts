@@ -5,6 +5,8 @@ import { signupUseCase } from '../application/signup.usecase.js'
 import { loginUseCase } from '../application/login.usecase.js'
 import { generateApiKeyUseCase } from '../application/generate-api-key.usecase.js'
 import { listApiKeysUseCase, revokeApiKeyUseCase } from '../application/list-api-keys.usecase.js'
+import { updateProfileUseCase } from '../application/update-profile.usecase.js'
+import { updateOrgUseCase } from '../application/update-org.usecase.js'
 import { requireAuth } from '../../../shared/middleware/require-auth.js'
 import { validateBody } from '../../../shared/middleware/validate-body.js'
 import { db } from '../../../shared/infrastructure/db.js'
@@ -79,6 +81,45 @@ export async function authRoutes(app: FastifyInstance) {
         organisationName: row.orgName,
       },
     })
+  })
+
+  /**
+   * PATCH /v1/auth/me
+   * Updates the current user's profile (firstName, lastName).
+   */
+  app.patch('/me', {
+    schema: { tags: ['Auth'], summary: 'Update current user profile', security: [{ cookieAuth: [] }] },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onRequest: app.csrfProtection as any,
+    preHandler: [requireAuth],
+  }, async (req, reply) => {
+    const body = z.object({
+      firstName: z.string().min(1).max(64).optional(),
+      lastName: z.string().min(1).max(64).optional(),
+    }).parse(req.body)
+
+    const { userId } = req.user!
+    const result = await updateProfileUseCase(userId, body)
+    return reply.send({ data: result })
+  })
+
+  /**
+   * PATCH /v1/auth/org
+   * Updates the organisation name. Owner only.
+   */
+  app.patch('/org', {
+    schema: { tags: ['Auth'], summary: 'Update organisation (owner only)', security: [{ cookieAuth: [] }] },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onRequest: app.csrfProtection as any,
+    preHandler: [requireAuth],
+  }, async (req, reply) => {
+    const body = z.object({
+      name: z.string().min(2).max(100),
+    }).parse(req.body)
+
+    const { organisationId, role } = req.user!
+    const result = await updateOrgUseCase(organisationId, role, body)
+    return reply.send({ data: result })
   })
 
   /**
