@@ -34,7 +34,7 @@ function useFeatures(projectId: string | null, from: string, to: string) {
   return useQuery({
     queryKey: ['features', projectId, from, to],
     queryFn: () =>
-      apiFetch<FeatureRow[]>(`/v1/projects/${projectId}/features?from=${from}&to=${to}`),
+      apiFetch<FeatureRow[]>(`/v1/projects/${projectId}/features?from=${from}T00:00:00Z&to=${to}T23:59:59Z`),
     enabled: !!projectId,
   })
 }
