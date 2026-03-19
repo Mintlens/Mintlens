@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/cn'
+import { toast } from 'sonner'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -116,10 +117,15 @@ function ApiKeysContent() {
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
     if (!newName.trim() || !projectId) return
-    const result = await createKey.mutateAsync({ projectId, name: newName.trim() })
-    setCreatedKey(result.rawKey)
-    setNewName('')
-    setShowCreate(false)
+    try {
+      const result = await createKey.mutateAsync({ projectId, name: newName.trim() })
+      setCreatedKey(result.rawKey)
+      setNewName('')
+      setShowCreate(false)
+      toast.success('API key generated')
+    } catch {
+      toast.error('Failed to generate API key')
+    }
   }
 
   function copyKey() {
@@ -130,9 +136,10 @@ function ApiKeysContent() {
   }
 
   function handleRevoke(keyId: string) {
-    if (confirm('Revoke this API key? This cannot be undone.')) {
-      revokeKey.mutate(keyId)
-    }
+    revokeKey.mutate(keyId, {
+      onSuccess: () => toast.success('API key revoked'),
+      onError: () => toast.error('Failed to revoke API key'),
+    })
   }
 
   const activeKeys  = (keys ?? []).filter((k) => !k.isRevoked)

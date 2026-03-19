@@ -7,6 +7,7 @@ import { BudgetCard } from '@/components/budgets/budget-card'
 import { BudgetsSkeleton } from '@/components/budgets/budgets-skeleton'
 import { CreateBudgetDialog } from '@/components/budgets/create-budget-dialog'
 import { Wallet } from 'lucide-react'
+import { toast } from 'sonner'
 
 function BudgetsContent() {
   const { projectId, waiting } = useReadyProject()
@@ -45,7 +46,10 @@ function BudgetsContent() {
             <BudgetCard
               key={b.budgetId}
               budget={b}
-              onDelete={(id) => deleteBudget(id)}
+              onDelete={(id) => deleteBudget(id, {
+                onSuccess: () => toast.success('Budget deleted'),
+                onError: () => toast.error('Failed to delete budget'),
+              })}
               deleting={deleting}
             />
           ))}
