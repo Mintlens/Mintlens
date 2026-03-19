@@ -69,10 +69,10 @@ export function Sidebar() {
   const toggle       = useSidebarStore((s) => s.toggle)
 
   async function logout() {
-    try {
-      await apiFetch('/v1/auth/logout', { method: 'POST' })
-    } catch { /* ignore — cookie cleared client-side regardless */ }
-    document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    await fetch(`${process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001'}/v1/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+    })
     invalidateCsrfToken()
     clearProject()
     router.push('/login')
