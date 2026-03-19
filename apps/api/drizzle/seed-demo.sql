@@ -88,7 +88,15 @@ VALUES
   (v_budget_tenant, v_proj_main, 'Acme tenant limit',   'tenant',  80000000,  'rolling_30d', true,  ARRAY[80, 95, 100])
 ON CONFLICT (id) DO NOTHING;
 
--- ── 8. llm_requests — 60 jours de données réalistes ──────────
+-- ── 8. Budget alerts (simulated past alerts) ─────────────────
+INSERT INTO budget_alerts (budget_id, threshold, channel, recipient, period, fired_at)
+VALUES
+  (v_budget_proj, 75, 'email', 'demo@mintlens.dev', TO_CHAR(CURRENT_DATE - INTERVAL '15 days', 'YYYY-MM'), CURRENT_DATE - INTERVAL '15 days'),
+  (v_budget_proj, 90, 'email', 'demo@mintlens.dev', TO_CHAR(CURRENT_DATE - INTERVAL '5 days', 'YYYY-MM'),  CURRENT_DATE - INTERVAL '5 days'),
+  (v_budget_tenant, 80, 'email', 'demo@mintlens.dev', TO_CHAR(CURRENT_DATE - INTERVAL '3 days', 'YYYY-MM'), CURRENT_DATE - INTERVAL '3 days')
+ON CONFLICT DO NOTHING;
+
+-- ── 9. llm_requests — 60 days of realistic data ─────────────
 FOR v_d IN SELECT gs::date FROM generate_series(
   CURRENT_DATE - INTERVAL '59 days',
   CURRENT_DATE,
@@ -96,7 +104,7 @@ FOR v_d IN SELECT gs::date FROM generate_series(
 ) gs LOOP
   FOR i IN 1..( 15 + floor(random()*30)::int ) LOOP
 
-    -- Distribution providers/modèles
+    -- Provider/model distribution
     CASE floor(random()*5)::int
       WHEN 0 THEN v_prov := 'openai';    v_model := CASE WHEN random()>0.5 THEN 'gpt-4o' ELSE 'gpt-4o-mini' END;
       WHEN 1 THEN v_prov := 'anthropic'; v_model := CASE WHEN random()>0.5 THEN 'claude-3-5-sonnet-20241022' ELSE 'claude-3-haiku-20240307' END;
@@ -112,7 +120,7 @@ FOR v_d IN SELECT gs::date FROM generate_series(
       ELSE        v_feat := v_feat_search;
     END CASE;
 
-    -- Tenant (null 20% du temps, Acme plus fréquent)
+    -- Tenant (null 20% of the time, Acme more frequent)
     CASE floor(random()*5)::int
       WHEN 0 THEN v_tenant := NULL;
       WHEN 1 THEN v_tenant := v_tenant_acme;
@@ -121,7 +129,7 @@ FOR v_d IN SELECT gs::date FROM generate_series(
       ELSE        v_tenant := v_tenant_initec;
     END CASE;
 
-    -- Tokens réalistes
+    -- Realistic token counts
     v_tin  := CASE
       WHEN v_model = 'gpt-4o'                     THEN 500  + floor(random()*2000)::int
       WHEN v_model = 'claude-3-5-sonnet-20241022'  THEN 800  + floor(random()*3000)::int
@@ -129,7 +137,7 @@ FOR v_d IN SELECT gs::date FROM generate_series(
     END;
     v_tout := v_tin / 3 + floor(random()*500)::int;
 
-    -- Coût microdollars (basé sur tarifs publics approximatifs)
+    -- Cost in microdollars (based on approximate public pricing)
     v_cost := CASE v_model
       WHEN 'gpt-4o'                     THEN (v_tin * 5  + v_tout * 15)
       WHEN 'gpt-4o-mini'                THEN (v_tin / 10 + v_tout / 5)
@@ -163,7 +171,7 @@ END LOOP;
 RAISE NOTICE 'Seed completed successfully.';
 END $$;
 
--- Vérification
+-- Verification
 SELECT tbl, cnt FROM (
   SELECT 'organisations' AS tbl, count(*)::int AS cnt FROM organisations WHERE id = '11111111-0000-0000-0000-000000000001'
   UNION ALL SELECT 'users',        count(*)::int FROM users    WHERE email = 'demo@mintlens.dev'
@@ -172,5 +180,6 @@ SELECT tbl, cnt FROM (
   UNION ALL SELECT 'features',     count(*)::int FROM features WHERE project_id = '33333333-0000-0000-0000-000000000001'
   UNION ALL SELECT 'tenants',      count(*)::int FROM tenants  WHERE project_id = '33333333-0000-0000-0000-000000000001'
   UNION ALL SELECT 'budgets',      count(*)::int FROM budgets  WHERE project_id = '33333333-0000-0000-0000-000000000001'
-  UNION ALL SELECT 'llm_requests', count(*)::int FROM llm_requests WHERE project_id = '33333333-0000-0000-0000-000000000001'
+  UNION ALL SELECT 'llm_requests',  count(*)::int FROM llm_requests  WHERE project_id = '33333333-0000-0000-0000-000000000001'
+  UNION ALL SELECT 'budget_alerts', count(*)::int FROM budget_alerts WHERE budget_id IN ('77777777-0000-0000-0000-000000000001', '77777777-0000-0000-0000-000000000002')
 ) t ORDER BY tbl;
