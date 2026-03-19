@@ -17,20 +17,43 @@ import { sendBudgetAlertEmail } from './budget-alert.service.js'
 
 const BUDGET_CHECK_QUEUE = 'budget-check'
 
-/** Returns Redis spend key for the current period of a budget */
-function spendKey(b: {
+/** Returns Redis spend for the current period of a budget */
+async function currentSpend(b: {
   scope: string
   projectId: string
   tenantId: string | null
   featureId: string | null
   period: string
-}): string {
+}): Promise<number> {
   const scopeId = b.tenantId ?? b.featureId ?? b.projectId
   const scope   = b.tenantId ? 'tenant' : b.featureId ? 'feature' : 'project'
-  const today   = new Date().toISOString().slice(0, 10)
+  const now     = new Date()
+  const today   = now.toISOString().slice(0, 10)
   const month   = today.slice(0, 7)
-  const periodSuffix = b.period === 'daily' ? `daily:${today}` : `monthly:${month}`
-  return `budget:${scope}:${scopeId}:${periodSuffix}`
+
+  if (b.period === 'daily') {
+    const raw = await redis.get(`budget:${scope}:${scopeId}:daily:${today}`)
+    return raw ? Number(raw) : 0
+  }
+
+  if (b.period === 'monthly') {
+    const raw = await redis.get(`budget:${scope}:${scopeId}:monthly:${month}`)
+    return raw ? Number(raw) : 0
+  }
+
+  // rolling_30d: sum last 30 daily counters
+  const pipeline = redis.pipeline()
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(now)
+    d.setDate(d.getDate() - i)
+    pipeline.get(`budget:${scope}:${scopeId}:daily:${d.toISOString().slice(0, 10)}`)
+  }
+  const results = await pipeline.exec()
+  let total = 0
+  for (const r of results ?? []) {
+    if (r?.[1]) total += Number(r[1])
+  }
+  return total
 }
 
 /** Current period key used to deduplicate alerts (e.g. "2026-03" or "2026-03-06") */
@@ -49,9 +72,7 @@ async function checkAllBudgets() {
 
   for (const { budgets: b, projects: p, users: u } of activeBudgets) {
     try {
-      const key          = spendKey(b)
-      const spentRaw     = await redis.get(key)
-      const spentMicro   = spentRaw ? Number(spentRaw) : 0
+      const spentMicro   = await currentSpend(b)
       const usagePct     = b.limitMicro > 0 ? spentMicro / b.limitMicro : 0
       const period       = periodKey(b.period)
 
