@@ -4,6 +4,8 @@ import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Layers, Search, ArrowUpDown } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
+import { useReadyProject } from '@/hooks/use-ready-project'
+import { useProjects } from '@/hooks/use-projects'
 import { useAuthStore } from '@/store/auth.store'
 import { apiFetch } from '@/lib/api-client'
 import { Card, CardContent } from '@/components/ui/card'
@@ -81,17 +83,30 @@ function FeaturesContent() {
   const sp        = useSearchParams()
   const from      = sp.get('from') ?? defaultFrom()
   const to        = sp.get('to')   ?? defaultTo()
-  const projectId = useAuthStore((s) => s.selectedProjectId)
+  const { projectId, waiting } = useReadyProject()
+  const { data: projects } = useProjects()
+  const setSelectedProject = useAuthStore((s) => s.setSelectedProject)
   const { data: features, isLoading } = useFeatures(projectId, from, to)
 
   const [search, setSearch]   = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('cost')
   const [sortAsc, setSortAsc] = useState(false)
 
+  if (waiting) {
+    return (
+      <div className="space-y-6 p-6">
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-16 rounded-2xl" />
+        <Skeleton className="h-64 rounded-2xl" />
+      </div>
+    )
+  }
+
   if (!projectId) {
     return (
-      <div className="flex h-64 items-center justify-center text-sm text-slate-400">
-        Select a project above
+      <div className="flex h-64 flex-col items-center justify-center gap-3 text-sm text-slate-400">
+        <Layers className="h-8 w-8 text-slate-200" />
+        <p>Select a project to view features</p>
       </div>
     )
   }
@@ -131,9 +146,22 @@ function FeaturesContent() {
     <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
-        <p className="text-sm text-slate-400">
-          {filtered.length} feature{filtered.length !== 1 ? 's' : ''} · {from} → {to}
-        </p>
+        <div className="flex items-center gap-3">
+          {projects && projects.length > 1 && (
+            <select
+              value={projectId ?? ''}
+              onChange={(e) => setSelectedProject(e.target.value)}
+              className="h-9 rounded-xl border border-slate-100 bg-slate-50 px-3 text-sm text-slate-700 outline-none transition-colors focus:border-mint-300 focus:bg-white"
+            >
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          )}
+          <p className="text-sm text-slate-400">
+            {filtered.length} feature{filtered.length !== 1 ? 's' : ''} · {from} → {to}
+          </p>
+        </div>
 
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-300" />
