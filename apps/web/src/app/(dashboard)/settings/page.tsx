@@ -1,9 +1,14 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { Settings, User, Building2, Bell, Palette, Moon, Sun, Monitor } from 'lucide-react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useMe } from '@/hooks/use-user'
+import { apiFetch } from '@/lib/api-client'
 import { cn } from '@/lib/cn'
+import { toast } from 'sonner'
 
 /* ------------------------------------------------------------------ */
 /*  Settings page — static layout, no API needed for now               */
@@ -66,6 +71,29 @@ function SettingsContent() {
 /* ------------------------------------------------------------------ */
 
 function ProfileTab() {
+  const { data, isLoading } = useMe()
+  const qc = useQueryClient()
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+
+  useEffect(() => {
+    if (data) {
+      setFirstName(data.firstName ?? '')
+      setLastName(data.lastName ?? '')
+    }
+  }, [data])
+
+  const { mutate: save, isPending } = useMutation({
+    mutationFn: (body: { firstName: string; lastName: string }) =>
+      apiFetch('/v1/auth/me', { method: 'PATCH', body: JSON.stringify(body) }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['me'] }); toast.success('Profile updated') },
+    onError: () => toast.error('Failed to update profile'),
+  })
+
+  if (isLoading) return <Skeleton className="h-64 rounded-2xl" />
+
+  const inputClass = 'h-9 w-full rounded-xl border border-slate-100 bg-slate-50 px-3 text-sm text-slate-700 placeholder:text-slate-300 outline-none transition-colors focus:border-mint-300 focus:bg-white'
+
   return (
     <Card>
       <CardHeader>
@@ -73,33 +101,21 @@ function ProfileTab() {
       </CardHeader>
       <CardContent className="space-y-4">
         <FieldGroup label="First name">
-          <input
-            type="text"
-            defaultValue=""
-            placeholder="Tony"
-            className="h-9 w-full rounded-xl border border-slate-100 bg-slate-50 px-3 text-sm text-slate-700 placeholder:text-slate-300 outline-none transition-colors focus:border-mint-300 focus:bg-white"
-          />
+          <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClass} />
         </FieldGroup>
         <FieldGroup label="Last name">
-          <input
-            type="text"
-            defaultValue=""
-            placeholder="Yonke"
-            className="h-9 w-full rounded-xl border border-slate-100 bg-slate-50 px-3 text-sm text-slate-700 placeholder:text-slate-300 outline-none transition-colors focus:border-mint-300 focus:bg-white"
-          />
+          <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClass} />
         </FieldGroup>
         <FieldGroup label="Email">
-          <input
-            type="email"
-            defaultValue=""
-            placeholder="demo@mintlens.dev"
-            disabled
-            className="h-9 w-full rounded-xl border border-slate-100 bg-slate-50 px-3 text-sm text-slate-400 outline-none"
-          />
+          <input type="email" value={data?.email ?? ''} disabled className="h-9 w-full rounded-xl border border-slate-100 bg-slate-50 px-3 text-sm text-slate-400 outline-none" />
         </FieldGroup>
         <div className="pt-2">
-          <button className="rounded-xl bg-mint-500 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-mint-600 disabled:opacity-50">
-            Save changes
+          <button
+            onClick={() => save({ firstName, lastName })}
+            disabled={isPending}
+            className="rounded-xl bg-mint-500 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-mint-600 disabled:opacity-50"
+          >
+            {isPending ? 'Saving…' : 'Save changes'}
           </button>
         </div>
       </CardContent>
@@ -108,6 +124,23 @@ function ProfileTab() {
 }
 
 function OrganizationTab() {
+  const { data, isLoading } = useMe()
+  const qc = useQueryClient()
+  const [orgName, setOrgName] = useState('')
+
+  useEffect(() => {
+    if (data) setOrgName(data.organisationName ?? '')
+  }, [data])
+
+  const { mutate: save, isPending } = useMutation({
+    mutationFn: (body: { name: string }) =>
+      apiFetch('/v1/auth/org', { method: 'PATCH', body: JSON.stringify(body) }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['me'] }); toast.success('Organisation updated') },
+    onError: () => toast.error('Failed to update organisation'),
+  })
+
+  if (isLoading) return <Skeleton className="h-48 rounded-2xl" />
+
   return (
     <Card>
       <CardHeader>
@@ -117,24 +150,25 @@ function OrganizationTab() {
         <FieldGroup label="Organization name">
           <input
             type="text"
-            defaultValue=""
-            placeholder="Mintlens Inc."
+            value={orgName}
+            onChange={(e) => setOrgName(e.target.value)}
             className="h-9 w-full rounded-xl border border-slate-100 bg-slate-50 px-3 text-sm text-slate-700 placeholder:text-slate-300 outline-none transition-colors focus:border-mint-300 focus:bg-white"
           />
         </FieldGroup>
         <FieldGroup label="Plan">
           <div className="flex items-center gap-3">
             <span className="inline-flex items-center rounded-full bg-mint-50 px-2.5 py-0.5 text-xs font-medium text-mint-600">
-              Free
+              {data?.role === 'owner' ? 'Free' : data?.role ?? 'Free'}
             </span>
-            <button className="text-xs text-mint-500 hover:underline">
-              Upgrade plan
-            </button>
           </div>
         </FieldGroup>
         <div className="pt-2">
-          <button className="rounded-xl bg-mint-500 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-mint-600">
-            Save changes
+          <button
+            onClick={() => save({ name: orgName })}
+            disabled={isPending || orgName.trim().length < 2}
+            className="rounded-xl bg-mint-500 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-mint-600 disabled:opacity-50"
+          >
+            {isPending ? 'Saving…' : 'Save changes'}
           </button>
         </div>
       </CardContent>
