@@ -158,7 +158,7 @@ describe('GET /v1/budgets', () => {
         })
 
         expect(res.statusCode).toBe(200)
-        const body = res.json<{ data: Array<{ name: string; spentMicro: number }> }>()
+        const body = res.json<{ data: Array<{ name: string; currentMicro: number }> }>()
         expect(body.data).toHaveLength(2)
         // All budgets start with zero spend (no events ingested)
         expect(body.data.every((b) => b.currentMicro === 0)).toBe(true)
