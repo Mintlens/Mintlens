@@ -2,7 +2,6 @@
 
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { useAuthStore } from '@/store/auth.store'
 import { useCostExplorer } from '@/hooks/use-analytics'
 import { CostChart } from '@/components/cost-explorer/cost-chart'
 import { BreakdownTable } from '@/components/cost-explorer/breakdown-table'
@@ -20,14 +19,11 @@ function CostExplorerContent() {
   const sp         = useSearchParams()
   const from       = sp.get('from') ?? defaultFrom()
   const to         = sp.get('to')   ?? defaultTo()
-  const projectId  = useAuthStore((s) => s.selectedProjectId)
-
   const [granularity, setGranularity] = useState<'day' | 'week' | 'month'>('day')
   const [provider, setProvider]       = useState('')
   const [model, setModel]             = useState('')
 
   const { data, isLoading } = useCostExplorer({
-    projectId: projectId ?? '',
     from,
     to,
     granularity,
@@ -35,25 +31,14 @@ function CostExplorerContent() {
     ...(model    ? { model }    : {}),
   })
 
-  if (!projectId) {
-    return (
-      <div className="flex h-64 items-center justify-center text-sm text-slate-400">
-        Select a project above
-      </div>
-    )
-  }
-
   if (isLoading && !data) {
     return <CostExplorerSkeleton />
   }
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-base font-semibold text-slate-900">Cost Explorer</h2>
-          <p className="text-sm text-slate-400">{from} → {to}</p>
-        </div>
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-sm text-slate-400">{from} → {to}</p>
         <FiltersBar
           granularity={granularity}
           onGranularity={setGranularity}

@@ -79,20 +79,24 @@ export function Sidebar() {
 
   return (
     <aside
+      data-sidebar={collapsed ? 'collapsed' : 'expanded'}
       className={cn(
-        'flex h-screen shrink-0 flex-col border-r border-slate-100 bg-white transition-all duration-200',
-        collapsed ? 'w-16' : 'w-56',
+        'flex h-screen shrink-0 flex-col py-4 pl-4 transition-[width] duration-300 ease-in-out',
+        collapsed ? 'w-[72px]' : 'w-60',
       )}
     >
       {/* Logo + collapse toggle */}
-      <div className="flex h-14 items-center justify-between px-3">
-        <div className={cn('flex items-center', collapsed ? 'mx-auto' : 'pl-2')}>
-          <MintlensLogo showWordmark={!collapsed} className="h-6 w-6" />
+      <div className={cn(
+        'flex h-14 items-center',
+        collapsed ? 'justify-center pl-3 pr-1' : 'justify-between px-3',
+      )}>
+        <div className={cn('flex items-center', collapsed ? '' : 'pl-1')}>
+          <MintlensLogo showWordmark={!collapsed} variant="light" className="h-6 w-6" />
         </div>
         {!collapsed && (
           <button
             onClick={toggle}
-            className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-600"
+            className="rounded-lg p-1.5 text-white/50 transition-colors hover:text-white"
             title="Collapse sidebar"
           >
             <PanelLeftClose className="h-4 w-4" />
@@ -102,10 +106,10 @@ export function Sidebar() {
 
       {/* Expand button (visible when collapsed) */}
       {collapsed && (
-        <div className="flex justify-center pb-2">
+        <div className="flex justify-center py-1 pl-3 pr-1">
           <button
             onClick={toggle}
-            className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-600"
+            className="rounded-lg p-1.5 text-white/50 transition-colors hover:text-white"
             title="Expand sidebar"
           >
             <PanelLeftOpen className="h-4 w-4" />
@@ -114,19 +118,18 @@ export function Sidebar() {
       )}
 
       {/* Nav sections */}
-      <nav className="flex-1 overflow-y-auto px-2 py-2">
+      <nav className="mt-6 flex-1 space-y-3 overflow-y-auto pl-2 pr-0">
         {NAV_SECTIONS.map((section) => (
-          <div key={section.title} className="mb-4">
-            {!collapsed && (
-              <p className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                {section.title}
-              </p>
-            )}
-
-            {/* Thin separator in collapsed mode */}
-            {collapsed && (
-              <div className="mx-auto mb-2 h-px w-6 bg-slate-100" />
-            )}
+          <div key={section.title}>
+            <div className={cn('mb-2', collapsed ? 'flex h-4 items-center justify-center' : 'px-3')}>
+              {collapsed ? (
+                <div className="h-px w-6 bg-white/30" />
+              ) : (
+                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/35">
+                  {section.title}
+                </span>
+              )}
+            </div>
 
             <div className="space-y-0.5">
               {section.items.map(({ href, label, icon: Icon }) => {
@@ -138,25 +141,22 @@ export function Sidebar() {
                     href={href}
                     title={collapsed ? label : undefined}
                     className={cn(
-                      'group relative flex items-center rounded-md text-sm font-medium transition-colors duration-150',
-                      collapsed ? 'justify-center px-2 py-2.5' : 'gap-2.5 px-3 py-2',
+                      'group relative flex items-center text-[13px] font-medium',
+                      collapsed
+                        ? 'justify-center py-2.5 px-2'
+                        : 'gap-3 px-3 py-2.5',
                       active
-                        ? 'bg-mint-50 text-mint-600'
-                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
+                        ? 'sidebar-active-tab text-mint-700'
+                        : 'rounded-xl text-white/80 sidebar-glass-hover hover:text-white',
                     )}
                   >
-                    {/* Active indicator — vertical bar */}
-                    {active && (
-                      <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r-full bg-mint-400" />
-                    )}
-
                     <Icon
                       className={cn(
-                        'h-4 w-4 shrink-0 transition-colors',
-                        active ? 'text-mint-500' : 'text-slate-400 group-hover:text-slate-600',
+                        'h-[18px] w-[18px] shrink-0',
+                        active ? 'text-mint-500' : 'text-white group-hover:text-white',
                       )}
                     />
-                    {!collapsed && label}
+                    {!collapsed && <span>{label}</span>}
                   </Link>
                 )
               })}
@@ -165,17 +165,17 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* Footer */}
-      <div className="border-t border-slate-100 p-2">
+      {/* Footer — Sign out */}
+      <div className="pl-0 pr-2 pb-1 pt-2">
         <button
           onClick={logout}
           title={collapsed ? 'Sign out' : undefined}
           className={cn(
-            'flex w-full items-center rounded-md text-sm text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700',
-            collapsed ? 'justify-center px-2 py-2.5' : 'gap-2.5 px-3 py-2',
+            'flex w-full items-center rounded-xl text-[13px] font-medium text-white/60 sidebar-glass-hover hover:text-white/80',
+            collapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2.5',
           )}
         >
-          <LogOut className="h-4 w-4 shrink-0" />
+          <LogOut className="h-[18px] w-[18px] shrink-0" />
           {!collapsed && 'Sign out'}
         </button>
       </div>

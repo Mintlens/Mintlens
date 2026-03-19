@@ -1,146 +1,97 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
-import { useRouter, useSearchParams, usePathname } from 'next/navigation'
-import { useProjects } from '@/hooks/use-projects'
-import { useAuthStore } from '@/store/auth.store'
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
-import { cn } from '@/lib/cn'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { Bell, Settings } from 'lucide-react'
+import { useMe } from '@/hooks/use-me'
 
 /* ------------------------------------------------------------------ */
-/*  Date helpers                                                       */
+/*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
 
-function toIso(d: Date) {
-  return d.toISOString().slice(0, 10)
+function getInitials(firstName?: string | null, lastName?: string | null, email?: string): string {
+  if (firstName && lastName) {
+    return `${firstName[0]}${lastName[0]}`.toUpperCase()
+  }
+  if (firstName) return firstName[0]!.toUpperCase()
+  if (email) return email[0]!.toUpperCase()
+  return '?'
 }
 
-function daysAgo(n: number) {
-  const d = new Date()
-  d.setDate(d.getDate() - n)
-  return toIso(d)
-}
-
-function startOfMonth() {
-  const d = new Date()
-  d.setDate(1)
-  return toIso(d)
-}
-
-function startOfLastMonth() {
-  const d = new Date()
-  d.setMonth(d.getMonth() - 1, 1)
-  return toIso(d)
-}
-
-function endOfLastMonth() {
-  const d = new Date()
-  d.setDate(0) // last day of previous month
-  return toIso(d)
-}
-
-const today = () => toIso(new Date())
-
-interface Preset {
-  label: string
-  from: string
-  to: string
-}
-
-function usePresets(): Preset[] {
-  return useMemo(() => [
-    { label: 'Today',      from: today(),           to: today() },
-    { label: '7D',         from: daysAgo(7),        to: today() },
-    { label: '30D',        from: daysAgo(30),       to: today() },
-    { label: 'This month', from: startOfMonth(),    to: today() },
-    { label: 'Last month', from: startOfLastMonth(), to: endOfLastMonth() },
-    { label: '90D',        from: daysAgo(90),       to: today() },
-  ], [])
+const PAGE_META: Record<string, { title: string; description: string }> = {
+  '/overview':      { title: 'Overview',         description: 'Key metrics and trends at a glance' },
+  '/cost-explorer': { title: 'Cost Explorer',    description: 'Break down spend by model, feature, and tenant' },
+  '/requests':      { title: 'Requests',         description: 'Browse and inspect individual API calls' },
+  '/tenants':       { title: 'Tenants',          description: 'Monitor usage and costs per tenant' },
+  '/budgets':       { title: 'Budgets & Alerts', description: 'Set spend limits and alert thresholds' },
+  '/projects':      { title: 'Projects',         description: 'Organize and manage your tracked projects' },
+  '/api-keys':      { title: 'API Keys',         description: 'Create and manage SDK access keys' },
+  '/settings':      { title: 'Settings',         description: 'Manage your account and preferences' },
 }
 
 /* ------------------------------------------------------------------ */
-/*  TopBar                                                             */
+/*  TopBar — flat, directly on the canvas                              */
 /* ------------------------------------------------------------------ */
 
 export function TopBar() {
-  const router       = useRouter()
-  const pathname     = usePathname()
-  const searchParams = useSearchParams()
-  const { data: projects } = useProjects()
-  const presets      = usePresets()
+  const { data: me } = useMe()
+  const pathname = usePathname()
 
-  const selectedProjectId  = useAuthStore((s) => s.selectedProjectId)
-  const setSelectedProject = useAuthStore((s) => s.setSelectedProject)
-
-  // Auto-select first project if none selected
-  useEffect(() => {
-    if (!selectedProjectId && projects && projects.length > 0) {
-      setSelectedProject(projects[0]!.id)
-    }
-  }, [projects, selectedProjectId, setSelectedProject])
-
-  const from = searchParams.get('from') ?? daysAgo(30)
-  const to   = searchParams.get('to')   ?? today()
-
-  function setRange(newFrom: string, newTo: string) {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set('from', newFrom)
-    params.set('to', newTo)
-    router.replace(`${pathname}?${params.toString()}`)
-  }
-
-  // Detect which preset is active
-  const activePreset = presets.find((p) => p.from === from && p.to === to)
+  const initials = getInitials(me?.firstName, me?.lastName, me?.email)
+  const meta     = PAGE_META[pathname] ?? { title: 'Dashboard', description: '' }
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-4 border-b border-slate-100 bg-white px-5">
-      {/* Project selector */}
-      {projects && projects.length > 0 && (
-        <div className="w-48">
-          <Select
-            value={selectedProjectId ?? ''}
-            onValueChange={setSelectedProject}
-          >
-            <SelectTrigger className="h-8 text-xs">
-              <SelectValue placeholder="Select project" />
-            </SelectTrigger>
-            <SelectContent>
-              {projects.map((p) => (
-                <SelectItem key={p.id} value={p.id} className="text-xs">
-                  {p.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {/* Spacer */}
-      <div className="flex-1" />
-
-      {/* Date presets */}
-      <div className="flex items-center gap-1 rounded-xl bg-slate-50 p-1">
-        {presets.map((preset) => {
-          const isActive = activePreset?.label === preset.label
-          return (
-            <button
-              key={preset.label}
-              onClick={() => setRange(preset.from, preset.to)}
-              className={cn(
-                'rounded-lg px-2.5 py-1 text-xs font-medium transition-all duration-150',
-                isActive
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700',
-              )}
-            >
-              {preset.label}
-            </button>
-          )
-        })}
+    <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200/40 px-6">
+      {/* Left — Page title + description */}
+      <div>
+        <h1 className="text-lg font-semibold text-slate-800">{meta.title}</h1>
+        {meta.description && (
+          <p className="text-[12px] leading-tight text-slate-400">{meta.description}</p>
+        )}
       </div>
 
+      {/* Right — Notifications + Settings + Profile */}
+      <div className="flex items-center gap-1.5">
+        {/* Notification bell */}
+        <button
+          className="relative flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 transition-all duration-200 hover:bg-black/[0.04] hover:text-slate-600"
+          title="Notifications"
+        >
+          <Bell className="h-[18px] w-[18px]" />
+          <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-mint-400" />
+        </button>
+
+        {/* Settings */}
+        <Link
+          href="/settings"
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 transition-all duration-200 hover:bg-black/[0.04] hover:text-slate-600"
+          title="Settings"
+        >
+          <Settings className="h-[18px] w-[18px]" />
+        </Link>
+
+        {/* Divider */}
+        <div className="mx-1.5 h-7 w-px bg-slate-200/50" />
+
+        {/* Profile */}
+        <Link
+          href="/settings"
+          className="flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 transition-all duration-200 hover:bg-black/[0.04]"
+          title="Account settings"
+        >
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-mint-300 to-mint-500 text-xs font-bold text-white shadow-sm">
+            {initials}
+          </div>
+          {me && (
+            <div className="hidden sm:block">
+              <p className="text-[13px] font-semibold leading-tight text-slate-700">
+                {me.firstName ?? me.email?.split('@')[0]}
+              </p>
+              <p className="text-[10px] leading-tight text-slate-400">{me.role}</p>
+            </div>
+          )}
+        </Link>
+      </div>
     </header>
   )
 }

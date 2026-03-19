@@ -54,14 +54,14 @@ export interface TenantOverview {
 }
 
 export interface CostExplorerFilters {
-  projectId:      string
-  organisationId: string
-  from:           Date
-  to:             Date
-  featureKey?:    string
-  tenantId?:      string
-  provider?:      string
-  model?:         string
-  environment?:   string
-  granularity:    'day' | 'week' | 'month'
+  projectId?:      string
+  organisationId?: string
+  from:            Date
+  to:              Date
+  featureKey?:     string
+  tenantId?:       string
+  provider?:       string
+  model?:          string
+  environment?:    string
+  granularity:     'day' | 'week' | 'month'
 }

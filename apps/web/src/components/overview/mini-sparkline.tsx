@@ -9,6 +9,8 @@ interface MiniSparklineProps {
   color?: string
   /** Height in px. Defaults to 24. */
   height?: number
+  /** Width in px. Defaults to 56. Use '100%' for full-width. */
+  width?: number | string
 }
 
 /**
@@ -19,6 +21,7 @@ export function MiniSparkline({
   data,
   color = '#4ecba6',
   height = 24,
+  width = 56,
 }: MiniSparklineProps) {
   if (data.length < 2) return null
 
@@ -26,7 +29,7 @@ export function MiniSparkline({
   const gradientId = `spark-${color.replace('#', '')}`
 
   return (
-    <div style={{ width: 56, height }}>
+    <div style={{ width, height }}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={chartData} margin={{ top: 2, right: 0, left: 0, bottom: 2 }}>
           <defs>

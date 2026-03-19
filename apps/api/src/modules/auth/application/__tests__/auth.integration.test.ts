@@ -187,7 +187,7 @@ describe('POST /v1/auth/api-keys', () => {
             method: 'POST',
             url: '/v1/auth/api-keys',
             headers: { cookie: csrf.cookie, 'x-csrf-token': csrf.token },
-            payload: { projectId: 'some-uuid', name: 'Key' },
+            payload: { projectId: '00000000-0000-0000-0000-000000000000', name: 'Key' },
         })
         expect(res.statusCode).toBe(401)
     })

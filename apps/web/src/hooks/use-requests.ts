@@ -24,7 +24,7 @@ export interface RequestsPage {
 }
 
 export interface UseRequestsParams {
-  projectId: string
+  projectId?: string | null
   from: string
   to: string
   limit?: number
@@ -38,21 +38,21 @@ export interface UseRequestsParams {
 
 export function useRequests(params: UseRequestsParams) {
   const qs = new URLSearchParams({
-    projectId: params.projectId,
     from:      `${params.from}T00:00:00Z`,
     to:        `${params.to}T23:59:59Z`,
     limit:     String(params.limit ?? 50),
     offset:    String(params.offset ?? 0),
-    ...(params.provider    ? { provider:    params.provider }    : {}),
-    ...(params.model       ? { model:       params.model }       : {}),
-    ...(params.featureKey  ? { featureKey:  params.featureKey }  : {}),
-    ...(params.tenantId    ? { tenantId:    params.tenantId }    : {}),
-    ...(params.environment ? { environment: params.environment } : {}),
   })
+  if (params.projectId)   qs.set('projectId', params.projectId)
+  if (params.provider)    qs.set('provider', params.provider)
+  if (params.model)       qs.set('model', params.model)
+  if (params.featureKey)  qs.set('featureKey', params.featureKey)
+  if (params.tenantId)    qs.set('tenantId', params.tenantId)
+  if (params.environment) qs.set('environment', params.environment)
 
   return useQuery({
     queryKey: ['requests', params],
     queryFn: () => apiFetch<RequestsPage>(`/v1/analytics/requests?${qs}`),
-    enabled: !!params.projectId,
+    // Always enabled — null projectId triggers org-wide query
   })
 }

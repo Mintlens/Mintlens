@@ -4,8 +4,8 @@ import { projects } from '#schema'
 import { NotFoundError } from '../../../shared/errors/app-errors.js'
 
 export interface RequestFilters {
-  projectId: string
-  organisationId: string
+  projectId?: string
+  organisationId?: string
   from: Date
   to: Date
   limit: number
@@ -64,10 +64,14 @@ type CountRow = {
 
 function buildWhere(f: RequestFilters): SQL[] {
   const conds: SQL[] = [
-    sql`lr.project_id  = ${f.projectId}::uuid`,
     sql`lr.created_at >= ${f.from.toISOString()}`,
     sql`lr.created_at <  ${f.to.toISOString()}`,
   ]
+  if (f.projectId) {
+    conds.push(sql`lr.project_id = ${f.projectId}::uuid`)
+  } else if (f.organisationId) {
+    conds.push(sql`lr.project_id IN (SELECT id FROM projects WHERE organisation_id = ${f.organisationId}::uuid)`)
+  }
   if (f.provider)    conds.push(sql`lr.provider::text = ${f.provider}`)
   if (f.model)       conds.push(sql`lr.model ILIKE ${'%' + f.model + '%'}`)
   if (f.environment) conds.push(sql`lr.environment = ${f.environment}`)
@@ -79,10 +83,12 @@ function buildWhere(f: RequestFilters): SQL[] {
 }
 
 export async function getRequestsUseCase(f: RequestFilters): Promise<RequestsPage> {
-  const [project] = await db.select({ id: projects.id }).from(projects)
-    .where(and(eq(projects.id, f.projectId), eq(projects.organisationId, f.organisationId)))
-    .limit(1)
-  if (!project) throw new NotFoundError('Project', f.projectId)
+  if (f.projectId && f.organisationId) {
+    const [project] = await db.select({ id: projects.id }).from(projects)
+      .where(and(eq(projects.id, f.projectId), eq(projects.organisationId, f.organisationId)))
+      .limit(1)
+    if (!project) throw new NotFoundError('Project', f.projectId)
+  }
 
   const conds = buildWhere(f)
   const where = sql.join(conds, sql` AND `)

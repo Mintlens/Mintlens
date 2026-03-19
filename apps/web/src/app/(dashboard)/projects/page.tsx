@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api-client'
 import { useAuthStore } from '@/store/auth.store'
 import { Card, CardContent } from '@/components/ui/card'
+import { ProjectAvatar } from '@/components/ui/project-avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/cn'
@@ -56,7 +57,7 @@ const ENV_META: Record<string, { icon: typeof Globe; color: string; label: strin
 function ProjectsContent() {
   const { data: projects, isLoading } = useProjects()
   const createProject = useCreateProject()
-  const selectProject = useAuthStore((s) => s.selectProject)
+  const selectProject = useAuthStore((s) => s.setSelectedProject)
   const selectedId    = useAuthStore((s) => s.selectedProjectId)
   const router        = useRouter()
 
@@ -88,13 +89,10 @@ function ProjectsContent() {
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-base font-semibold text-slate-900">Projects</h2>
-          <p className="text-sm text-slate-400">
-            {projects?.length ?? 0} project{(projects?.length ?? 0) !== 1 ? 's' : ''}
-          </p>
-        </div>
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-sm text-slate-400">
+          {projects?.length ?? 0} project{(projects?.length ?? 0) !== 1 ? 's' : ''}
+        </p>
         <button
           onClick={() => setShowCreate(!showCreate)}
           className="inline-flex items-center gap-1.5 rounded-xl bg-mint-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-mint-600 hover:shadow-md active:scale-[0.98]"
@@ -151,7 +149,7 @@ function ProjectsContent() {
         </Card>
       )}
 
-      {/* Project grid */}
+      {/* Project grid — folder icons */}
       {!projects || projects.length === 0 ? (
         <div className="flex h-48 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-white">
           <FolderOpen className="h-8 w-8 text-slate-200" />
@@ -159,17 +157,18 @@ function ProjectsContent() {
           <p className="text-xs text-slate-300">Create your first project to start tracking costs</p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-x-4 gap-y-10 pt-7 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {projects.map((p) => {
-            const env = ENV_META[p.environment] ?? ENV_META.production
+            const env = ENV_META[p.environment] ?? ENV_META['production']!
             const EnvIcon = env.icon
             const isSelected = p.id === selectedId
 
             return (
-              <Card
+              <button
                 key={p.id}
+                type="button"
                 className={cn(
-                  'group cursor-pointer transition-all duration-200 hover:shadow-card-hover hover:scale-[1.01]',
+                  'folder-card group cursor-pointer p-5 text-left',
                   isSelected && 'ring-2 ring-mint-400 ring-offset-2',
                 )}
                 onClick={() => {
@@ -177,28 +176,29 @@ function ProjectsContent() {
                   router.push('/overview')
                 }}
               >
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between">
-                    <div className="min-w-0 flex-1">
-                      <h3 className="truncate text-sm font-semibold text-slate-900">{p.name}</h3>
-                      <p className="mt-0.5 truncate text-xs text-slate-400">{p.slug}</p>
-                    </div>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5" />
+                {/* Top row: name + chevron */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="truncate text-sm font-semibold text-slate-800 group-hover:text-slate-900">
+                      {p.name}
+                    </h3>
+                    <p className="mt-0.5 truncate text-xs text-slate-400">{p.slug}</p>
                   </div>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5" />
+                </div>
 
-                  <div className="mt-4 flex items-center gap-3">
-                    <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium', env.color)}>
-                      <EnvIcon className="h-3 w-3" />
-                      {env.label}
-                    </span>
-                  </div>
-
-                  <div className="mt-3 flex items-center gap-1.5 text-[11px] text-slate-400">
+                {/* Bottom row: env badge + date */}
+                <div className="mt-3 flex items-center justify-between">
+                  <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium', env.color)}>
+                    <EnvIcon className="h-3 w-3" />
+                    {env.label}
+                  </span>
+                  <span className="flex items-center gap-1 text-[11px] text-slate-400">
                     <Calendar className="h-3 w-3" />
-                    Created {formatDate(p.createdAt)}
-                  </div>
-                </CardContent>
-              </Card>
+                    {formatDate(p.createdAt)}
+                  </span>
+                </div>
+              </button>
             )
           })}
         </div>

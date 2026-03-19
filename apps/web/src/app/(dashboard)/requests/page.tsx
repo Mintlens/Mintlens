@@ -3,7 +3,6 @@
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { List, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useAuthStore } from '@/store/auth.store'
 import { useRequests } from '@/hooks/use-requests'
 import { RequestRow } from '@/components/requests/request-row'
 import { RequestsSkeleton } from '@/components/requests/requests-skeleton'
@@ -64,15 +63,12 @@ function RequestsContent() {
   const sp        = useSearchParams()
   const from      = sp.get('from') ?? defaultFrom()
   const to        = sp.get('to')   ?? defaultTo()
-  const projectId = useAuthStore((s) => s.selectedProjectId)
-
   const [offset, setOffset]       = useState(0)
   const [provider, setProvider]   = useState('')
   const [model, setModel]         = useState('')
   const [env, setEnv]             = useState('')
 
   const { data, isLoading } = useRequests({
-    projectId: projectId ?? '',
     from,
     to,
     limit: PAGE_SIZE,
@@ -81,14 +77,6 @@ function RequestsContent() {
     ...(model    ? { model }       : {}),
     ...(env      ? { environment: env } : {}),
   })
-
-  if (!projectId) {
-    return (
-      <div className="flex h-64 items-center justify-center text-sm text-slate-400">
-        Select a project above
-      </div>
-    )
-  }
 
   if (isLoading && !data) {
     return <RequestsSkeleton />
@@ -102,13 +90,10 @@ function RequestsContent() {
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-base font-semibold text-slate-900">Requests</h2>
-          <p className="text-sm text-slate-400">
-            {total.toLocaleString()} request{total !== 1 ? 's' : ''} · {from} → {to}
-          </p>
-        </div>
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-sm text-slate-400">
+          {total.toLocaleString()} request{total !== 1 ? 's' : ''} · {from} → {to}
+        </p>
 
         {/* Filters */}
         <div className="flex gap-2">

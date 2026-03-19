@@ -20,6 +20,25 @@ type DimensionRow = {
 }
 
 /**
+ * Builds the project filter condition.
+ * - When `projectId` is given → match single project.
+ * - When only `organisationId` is given → match ALL projects in the org.
+ */
+function projectCondition(f: CostExplorerFilters, tableAlias?: string): SQL {
+  const col = (name: string) =>
+    tableAlias ? sql.raw(`${tableAlias}.${name}`) : sql.raw(name)
+
+  if (f.projectId) {
+    return sql`${col('project_id')} = ${f.projectId}::uuid`
+  }
+  return sql`${col('project_id')} IN (
+    SELECT id FROM projects
+    WHERE organisation_id = ${f.organisationId!}::uuid
+      AND deleted_at IS NULL
+  )`
+}
+
+/**
  * Builds WHERE clause conditions for queries on `llm_requests`.
  * @param tableAlias - optional alias (e.g. 'lr') used when the query joins
  *                     other tables that share column names like `project_id`.
@@ -29,14 +48,14 @@ function buildConditions(f: CostExplorerFilters, tableAlias?: string): SQL[] {
     tableAlias ? sql.raw(`${tableAlias}.${name}`) : sql.raw(name)
 
   const conds: SQL[] = [
-    sql`${col('project_id')}  = ${f.projectId}::uuid`,
+    projectCondition(f, tableAlias),
     sql`${col('created_at')} >= ${f.from.toISOString()}`,
     sql`${col('created_at')} <  ${f.to.toISOString()}`,
   ]
   if (f.provider)    conds.push(sql`${col('provider')}    = ${f.provider}`)
   if (f.model)       conds.push(sql`${col('model')} ILIKE ${'%' + f.model + '%'}`)
   if (f.environment) conds.push(sql`${col('environment')} = ${f.environment}`)
-  if (f.featureKey) {
+  if (f.featureKey && f.projectId) {
     conds.push(sql`${col('feature_id')} = (
       SELECT id FROM features
       WHERE project_id = ${f.projectId}::uuid AND key = ${f.featureKey}
@@ -65,10 +84,12 @@ function toDimensions(rows: DimensionRow[], totalCost: number): CostByDimension[
 }
 
 export async function getCostExplorerUseCase(f: CostExplorerFilters): Promise<CostExplorerResult> {
-  const [project] = await db.select({ id: projects.id }).from(projects)
-    .where(and(eq(projects.id, f.projectId), eq(projects.organisationId, f.organisationId)))
-    .limit(1)
-  if (!project) throw new NotFoundError('Project', f.projectId)
+  if (f.projectId && f.organisationId) {
+    const [project] = await db.select({ id: projects.id }).from(projects)
+      .where(and(eq(projects.id, f.projectId), eq(projects.organisationId, f.organisationId)))
+      .limit(1)
+    if (!project) throw new NotFoundError('Project', f.projectId)
+  }
 
   const conds        = buildConditions(f)
   const condsAliased = buildConditions(f, 'lr')
