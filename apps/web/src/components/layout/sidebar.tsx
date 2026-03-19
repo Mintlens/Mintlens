@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   TrendingUp,
   List,
+  Layers,
   Users,
   Shield,
   FolderOpen,
@@ -42,6 +43,7 @@ const NAV_SECTIONS: NavSection[] = [
       { href: '/overview',      label: 'Overview',         icon: LayoutDashboard },
       { href: '/cost-explorer', label: 'Cost Explorer',    icon: TrendingUp },
       { href: '/requests',      label: 'Requests',         icon: List },
+      { href: '/features',      label: 'Features',         icon: Layers },
     ],
   },
   {
