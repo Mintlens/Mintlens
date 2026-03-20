@@ -7,6 +7,9 @@ import { generateApiKeyUseCase } from '../application/generate-api-key.usecase.j
 import { listApiKeysUseCase, revokeApiKeyUseCase } from '../application/list-api-keys.usecase.js'
 import { updateProfileUseCase } from '../application/update-profile.usecase.js'
 import { updateOrgUseCase } from '../application/update-org.usecase.js'
+import { forgotPasswordUseCase } from '../application/forgot-password.usecase.js'
+import { resetPasswordUseCase } from '../application/reset-password.usecase.js'
+import { sendVerificationEmailUseCase, verifyEmailUseCase } from '../application/send-verification.usecase.js'
 import { requireAuth } from '../../../shared/middleware/require-auth.js'
 import { validateBody } from '../../../shared/middleware/validate-body.js'
 import { db } from '../../../shared/infrastructure/db.js'
@@ -242,4 +245,61 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.status(204).send()
     },
   )
+
+  /**
+   * POST /v1/auth/forgot-password
+   * Sends a password reset email. Always returns 200 to prevent email enumeration.
+   */
+  app.post('/forgot-password', {
+    schema: { tags: ['Auth'], summary: 'Request password reset email' },
+    config: { rateLimit: { max: 3, timeWindow: '1 minute' } },
+  }, async (req, reply) => {
+    const { email } = z.object({ email: z.string().email() }).parse(req.body)
+    await forgotPasswordUseCase(email)
+    return reply.send({ data: { message: 'If an account exists with this email, a reset link has been sent.' } })
+  })
+
+  /**
+   * POST /v1/auth/reset-password
+   * Resets password using a token from the reset email.
+   */
+  app.post('/reset-password', {
+    schema: { tags: ['Auth'], summary: 'Reset password with token' },
+    config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
+  }, async (req, reply) => {
+    const { token, password } = z.object({
+      token: z.string().min(1),
+      password: z.string().min(8),
+    }).parse(req.body)
+    await resetPasswordUseCase(token, password)
+    return reply.send({ data: { message: 'Password has been reset. You can now log in.' } })
+  })
+
+  /**
+   * POST /v1/auth/send-verification
+   * Sends a verification email to the authenticated user.
+   */
+  app.post('/send-verification', {
+    schema: { tags: ['Auth'], summary: 'Send email verification link', security: [{ cookieAuth: [] }] },
+    preHandler: [requireAuth],
+  }, async (req, reply) => {
+    const { userId } = req.user!
+    await sendVerificationEmailUseCase(userId)
+    return reply.send({ data: { message: 'Verification email sent.' } })
+  })
+
+  /**
+   * POST /v1/auth/verify-email
+   * Verifies email using a code from the verification email.
+   */
+  app.post('/verify-email', {
+    schema: { tags: ['Auth'], summary: 'Verify email with code' },
+  }, async (req, reply) => {
+    const { code } = z.object({ code: z.string().min(1) }).parse(req.body)
+    const success = await verifyEmailUseCase(code)
+    if (!success) {
+      return reply.status(400).send({ error: { code: 'INVALID_CODE', message: 'Verification link is invalid or has expired.' } })
+    }
+    return reply.send({ data: { message: 'Email verified successfully.' } })
+  })
 }
