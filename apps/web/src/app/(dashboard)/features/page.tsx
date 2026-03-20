@@ -10,7 +10,7 @@ import { useAuthStore } from '@/store/auth.store'
 import { apiFetch } from '@/lib/api-client'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatUsd, formatNumber } from '@/lib/format'
+import { formatUsd, formatNumber, formatDate } from '@/lib/format'
 import { cn } from '@/lib/cn'
 
 /* ------------------------------------------------------------------ */
@@ -151,7 +151,7 @@ function FeaturesContent() {
             <select
               value={projectId ?? ''}
               onChange={(e) => setSelectedProject(e.target.value)}
-              className="h-9 rounded-xl border border-slate-100 bg-slate-50 px-3 text-sm text-slate-700 outline-none transition-colors focus:border-mint-300 focus:bg-white"
+              className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-600 outline-none transition-colors hover:border-slate-300 focus:border-mint-300"
             >
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
@@ -159,7 +159,7 @@ function FeaturesContent() {
             </select>
           )}
           <p className="text-sm text-slate-400">
-            {filtered.length} feature{filtered.length !== 1 ? 's' : ''} · {from} → {to}
+            {filtered.length} feature{filtered.length !== 1 ? 's' : ''} · {formatDate(from)} — {formatDate(to)}
           </p>
         </div>
 
@@ -170,7 +170,7 @@ function FeaturesContent() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search features…"
-            className="h-9 w-56 rounded-xl border border-slate-100 bg-slate-50 pl-8 pr-3 text-sm text-slate-700 placeholder:text-slate-300 outline-none transition-colors focus:border-mint-300 focus:bg-white"
+            className="h-9 w-56 rounded-xl border border-slate-200 bg-white pl-8 pr-3 text-sm text-slate-600 placeholder:text-slate-300 outline-none transition-colors hover:border-slate-300 focus:border-mint-300"
           />
         </div>
       </div>

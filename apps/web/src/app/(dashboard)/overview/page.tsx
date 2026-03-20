@@ -162,16 +162,16 @@ function OverviewContent() {
           <Card className="h-full">
             <CardHeader className="flex-row items-center justify-between space-y-0">
               <CardTitle>Spend over time</CardTitle>
-              <div className="flex gap-1">
+              <div className="flex rounded-xl border border-slate-200 p-0.5">
                 {CHART_PERIODS.map((p) => (
                   <button
                     key={p.key}
                     onClick={() => setChartPeriod(p.key)}
                     className={cn(
-                      'rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors',
+                      'rounded-[10px] px-3 py-1 text-[11px] font-medium transition-colors duration-150',
                       chartPeriod === p.key
-                        ? 'bg-mint-50 text-mint-600'
-                        : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600',
+                        ? 'bg-slate-800 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50',
                     )}
                   >
                     {p.label}

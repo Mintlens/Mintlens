@@ -7,6 +7,7 @@ import { useRequests } from '@/hooks/use-requests'
 import { RequestRow } from '@/components/requests/request-row'
 import { RequestsSkeleton } from '@/components/requests/requests-skeleton'
 import { Card, CardContent } from '@/components/ui/card'
+import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/cn'
 
 /* ------------------------------------------------------------------ */
@@ -41,8 +42,8 @@ function FilterSelect({ label, value, onChange, options }: FilterSelectProps) {
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className={cn(
-        'h-9 rounded-xl border border-slate-100 bg-slate-50 px-3 text-xs text-slate-600 outline-none',
-        'transition-colors focus:border-mint-300 focus:bg-white',
+        'h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-600 outline-none',
+        'transition-colors hover:border-slate-300 focus:border-mint-300',
       )}
     >
       <option value="">{label}</option>
@@ -92,7 +93,7 @@ function RequestsContent() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm text-slate-400">
-          {total.toLocaleString()} request{total !== 1 ? 's' : ''} · {from} → {to}
+          {total.toLocaleString()} request{total !== 1 ? 's' : ''} · {formatDate(from)} — {formatDate(to)}
         </p>
 
         {/* Filters */}
@@ -163,7 +164,7 @@ function RequestsContent() {
                   disabled={offset === 0}
                   onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
                   className={cn(
-                    'inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
+                    'inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-medium transition-colors',
                     offset === 0
                       ? 'text-slate-300'
                       : 'text-slate-600 hover:bg-slate-50',
@@ -176,7 +177,7 @@ function RequestsContent() {
                   disabled={offset + PAGE_SIZE >= total}
                   onClick={() => setOffset(offset + PAGE_SIZE)}
                   className={cn(
-                    'inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
+                    'inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-medium transition-colors',
                     offset + PAGE_SIZE >= total
                       ? 'text-slate-300'
                       : 'text-slate-600 hover:bg-slate-50',
