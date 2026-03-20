@@ -29,6 +29,7 @@ const PAGE_META: Record<string, { title: string; description: string }> = {
   '/projects':      { title: 'Projects',         description: 'Organize and manage your tracked projects' },
   '/api-keys':      { title: 'API Keys',         description: 'Create and manage SDK access keys' },
   '/settings':      { title: 'Settings',         description: 'Manage your account and preferences' },
+  '/team':          { title: 'Team',             description: 'Manage members and roles in your organisation' },
 }
 
 /* ------------------------------------------------------------------ */
