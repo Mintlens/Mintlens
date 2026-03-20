@@ -3,12 +3,13 @@
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Users, Search, ArrowUpDown } from 'lucide-react'
+import { EmptyState } from '@/components/shared/empty-state'
 // Org-wide by default — no project selection needed
 import { useTenants } from '@/hooks/use-analytics'
 import { TenantRow } from '@/components/tenants/tenant-row'
 import { TenantsSkeleton } from '@/components/tenants/tenants-skeleton'
 import { Card, CardContent } from '@/components/ui/card'
-import { formatUsd, formatNumber } from '@/lib/format'
+import { formatUsd, formatNumber, formatDate } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import type { TenantOverview } from '@mintlens/shared'
 
@@ -98,7 +99,7 @@ function TenantsContent() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm text-slate-400">
-          {filtered.length} tenant{filtered.length !== 1 ? 's' : ''} · {from} → {to}
+          {filtered.length} tenant{filtered.length !== 1 ? 's' : ''} · {formatDate(from)} — {formatDate(to)}
         </p>
 
         {/* Search */}
@@ -109,7 +110,7 @@ function TenantsContent() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search tenants…"
-            className="h-9 w-56 rounded-xl border border-slate-100 bg-slate-50 pl-8 pr-3 text-sm text-slate-700 placeholder:text-slate-300 outline-none transition-colors focus:border-mint-300 focus:bg-white"
+            className="h-9 w-56 rounded-xl border border-slate-200 bg-white pl-8 pr-3 text-sm text-slate-600 placeholder:text-slate-300 outline-none transition-colors hover:border-slate-300 focus:border-mint-300"
           />
         </div>
       </div>
@@ -124,7 +125,11 @@ function TenantsContent() {
 
       {/* Table */}
       {sorted.length === 0 ? (
-        <EmptyState hasSearch={!!search} />
+        <EmptyState
+          icon={Users}
+          title={search ? 'No tenants matching your search' : 'No tenants tracked yet'}
+          description={search ? undefined : 'Tenants appear once your app sends requests with a tenant ID'}
+        />
       ) : (
         <Card className="overflow-hidden">
           <CardContent className="p-0">
@@ -196,22 +201,6 @@ function SortableHeader({
         <ArrowUpDown className={cn('h-3 w-3', active && 'text-mint-500')} />
       </button>
     </th>
-  )
-}
-
-function EmptyState({ hasSearch }: { hasSearch: boolean }) {
-  return (
-    <div className="flex h-48 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-white">
-      <Users className="h-8 w-8 text-slate-200" />
-      <p className="text-sm text-slate-400">
-        {hasSearch ? 'No tenants matching your search' : 'No tenants tracked yet'}
-      </p>
-      {!hasSearch && (
-        <p className="text-xs text-slate-300">
-          Tenants appear once your app sends requests with a tenant ID
-        </p>
-      )}
-    </div>
   )
 }
 

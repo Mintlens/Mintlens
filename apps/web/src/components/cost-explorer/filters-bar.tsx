@@ -25,16 +25,16 @@ export function FiltersBar({ granularity, onGranularity, provider, onProvider, m
   return (
     <div className="flex flex-wrap items-center gap-3">
       {/* Granularity toggle */}
-      <div className="flex rounded-md border border-slate-200 bg-white p-0.5">
+      <div className="flex rounded-xl border border-slate-200 bg-white p-0.5">
         {GRANULARITIES.map((g) => (
           <button
             key={g.value}
             onClick={() => onGranularity(g.value)}
             className={cn(
-              'rounded px-3 py-1 text-xs font-medium transition-colors duration-100',
+              'rounded-[10px] px-3.5 py-1 text-xs font-medium transition-colors duration-150',
               granularity === g.value
-                ? 'bg-slate-900 text-white'
-                : 'text-slate-500 hover:text-slate-700',
+                ? 'bg-slate-800 text-white shadow-sm'
+                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50',
             )}
           >
             {g.label}
@@ -46,7 +46,7 @@ export function FiltersBar({ granularity, onGranularity, provider, onProvider, m
       <select
         value={provider}
         onChange={(e) => onProvider(e.target.value)}
-        className="h-8 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-mint-400 transition-colors"
+        className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-600 outline-none transition-colors hover:border-slate-300 focus:border-mint-300"
       >
         <option value="">All providers</option>
         {PROVIDERS.filter(Boolean).map((p) => (
@@ -59,8 +59,8 @@ export function FiltersBar({ granularity, onGranularity, provider, onProvider, m
         type="text"
         value={model}
         onChange={(e) => onModel(e.target.value)}
-        placeholder="Filter by model…"
-        className="h-8 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-mint-400 transition-colors w-40"
+        placeholder="Filter by model..."
+        className="h-9 w-40 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-600 placeholder:text-slate-300 outline-none transition-colors hover:border-slate-300 focus:border-mint-300"
       />
     </div>
   )

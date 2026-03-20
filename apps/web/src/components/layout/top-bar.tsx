@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Bell, Settings } from 'lucide-react'
+import { Settings } from 'lucide-react'
 import { useMe } from '@/hooks/use-me'
+import { NotificationsPopover } from '@/components/layout/notifications-popover'
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -23,6 +24,7 @@ const PAGE_META: Record<string, { title: string; description: string }> = {
   '/cost-explorer': { title: 'Cost Explorer',    description: 'Break down spend by model, feature, and tenant' },
   '/requests':      { title: 'Requests',         description: 'Browse and inspect individual API calls' },
   '/tenants':       { title: 'Tenants',          description: 'Monitor usage and costs per tenant' },
+  '/features':      { title: 'Features',         description: 'Track cost breakdown by feature' },
   '/budgets':       { title: 'Budgets & Alerts', description: 'Set spend limits and alert thresholds' },
   '/projects':      { title: 'Projects',         description: 'Organize and manage your tracked projects' },
   '/api-keys':      { title: 'API Keys',         description: 'Create and manage SDK access keys' },
@@ -52,14 +54,8 @@ export function TopBar() {
 
       {/* Right — Notifications + Settings + Profile */}
       <div className="flex items-center gap-1.5">
-        {/* Notification bell */}
-        <button
-          className="relative flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 transition-all duration-200 hover:bg-black/[0.04] hover:text-slate-600"
-          title="Notifications"
-        >
-          <Bell className="h-[18px] w-[18px]" />
-          <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-mint-400" />
-        </button>
+        {/* Notifications */}
+        <NotificationsPopover />
 
         {/* Settings */}
         <Link

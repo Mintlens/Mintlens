@@ -8,7 +8,7 @@ import {
   List,
   Layers,
   Users,
-  Shield,
+    Shield,
   FolderOpen,
   Key,
   Settings,
@@ -155,7 +155,7 @@ export function Sidebar() {
                   >
                     <Icon
                       className={cn(
-                        'h-[18px] w-[18px] shrink-0',
+                        'h-[18px] w-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110',
                         active ? 'text-mint-500' : 'text-white group-hover:text-white',
                       )}
                     />

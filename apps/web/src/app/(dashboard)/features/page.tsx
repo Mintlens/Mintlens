@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Layers, Search, ArrowUpDown } from 'lucide-react'
+import { EmptyState } from '@/components/shared/empty-state'
 import { useQuery } from '@tanstack/react-query'
 import { useReadyProject } from '@/hooks/use-ready-project'
 import { useProjects } from '@/hooks/use-projects'
@@ -10,7 +11,7 @@ import { useAuthStore } from '@/store/auth.store'
 import { apiFetch } from '@/lib/api-client'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatUsd, formatNumber } from '@/lib/format'
+import { formatUsd, formatNumber, formatDate } from '@/lib/format'
 import { cn } from '@/lib/cn'
 
 /* ------------------------------------------------------------------ */
@@ -151,7 +152,7 @@ function FeaturesContent() {
             <select
               value={projectId ?? ''}
               onChange={(e) => setSelectedProject(e.target.value)}
-              className="h-9 rounded-xl border border-slate-100 bg-slate-50 px-3 text-sm text-slate-700 outline-none transition-colors focus:border-mint-300 focus:bg-white"
+              className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-600 outline-none transition-colors hover:border-slate-300 focus:border-mint-300"
             >
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
@@ -159,7 +160,7 @@ function FeaturesContent() {
             </select>
           )}
           <p className="text-sm text-slate-400">
-            {filtered.length} feature{filtered.length !== 1 ? 's' : ''} · {from} → {to}
+            {filtered.length} feature{filtered.length !== 1 ? 's' : ''} · {formatDate(from)} — {formatDate(to)}
           </p>
         </div>
 
@@ -170,7 +171,7 @@ function FeaturesContent() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search features…"
-            className="h-9 w-56 rounded-xl border border-slate-100 bg-slate-50 pl-8 pr-3 text-sm text-slate-700 placeholder:text-slate-300 outline-none transition-colors focus:border-mint-300 focus:bg-white"
+            className="h-9 w-56 rounded-xl border border-slate-200 bg-white pl-8 pr-3 text-sm text-slate-600 placeholder:text-slate-300 outline-none transition-colors hover:border-slate-300 focus:border-mint-300"
           />
         </div>
       </div>
@@ -185,7 +186,11 @@ function FeaturesContent() {
 
       {/* Table */}
       {sorted.length === 0 ? (
-        <EmptyState hasSearch={!!search} />
+        <EmptyState
+          icon={Layers}
+          title={search ? 'No features matching your search' : 'No features tracked yet'}
+          description={search ? undefined : 'Features appear once your app sends requests with a feature key'}
+        />
       ) : (
         <Card className="overflow-hidden">
           <CardContent className="p-0">
@@ -281,22 +286,6 @@ function SortableHeader({
         <ArrowUpDown className={cn('h-3 w-3', active && 'text-mint-500')} />
       </button>
     </th>
-  )
-}
-
-function EmptyState({ hasSearch }: { hasSearch: boolean }) {
-  return (
-    <div className="flex h-48 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-white">
-      <Layers className="h-8 w-8 text-slate-200" />
-      <p className="text-sm text-slate-400">
-        {hasSearch ? 'No features matching your search' : 'No features tracked yet'}
-      </p>
-      {!hasSearch && (
-        <p className="text-xs text-slate-300">
-          Features appear once your app sends requests with a feature key
-        </p>
-      )}
-    </div>
   )
 }
 

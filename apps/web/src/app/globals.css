@@ -33,6 +33,18 @@
 }
 
 /* ------------------------------------------------------------------ */
+/*  Micro-animation — notification dot pulse                            */
+/* ------------------------------------------------------------------ */
+
+@keyframes dot-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.6; }
+}
+.animate-dot-pulse {
+  animation: dot-pulse 2s ease-in-out infinite;
+}
+
+/* ------------------------------------------------------------------ */
 /*  Dashboard gradient background                                       */
 /* ------------------------------------------------------------------ */
 

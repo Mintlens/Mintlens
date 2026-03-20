@@ -5,6 +5,7 @@ import { validateBody } from '../../../shared/middleware/validate-body.js'
 import { createBudgetBody, listBudgetsQuery, type CreateBudgetBody } from './budgets.schemas.js'
 import { createBudgetUseCase } from '../application/create-budget.usecase.js'
 import { listBudgetsUseCase, deleteBudgetUseCase } from '../application/list-budgets.usecase.js'
+import { listAlertsUseCase, markAlertReadUseCase } from '../application/list-alerts.usecase.js'
 
 const budgetParams = z.object({ budgetId: z.string().uuid() })
 
@@ -78,6 +79,41 @@ export async function budgetsRoutes(app: FastifyInstance) {
       const { organisationId } = req.user!
       await deleteBudgetUseCase(organisationId, req.params.budgetId)
       return reply.status(204).send()
+    },
+  )
+
+  /**
+   * GET /v1/budgets/alerts?limit=&offset=
+   * Lists budget alerts for the organisation, newest first.
+   */
+  app.get('/alerts', {
+    schema: { tags: ['Budgets'], summary: 'List budget alerts', security: [{ cookieAuth: [] }] },
+    preHandler: [requireAuth],
+  }, async (req, reply) => {
+    const { organisationId } = req.user!
+    const q = z.object({
+      limit: z.coerce.number().int().min(1).max(100).default(20),
+      offset: z.coerce.number().int().min(0).default(0),
+    }).parse(req.query)
+    const result = await listAlertsUseCase(organisationId, q.limit, q.offset)
+    return reply.send({ data: result })
+  })
+
+  /**
+   * PATCH /v1/budgets/alerts/:alertId/read
+   * Marks a single alert as read.
+   */
+  app.patch<{ Params: { alertId: string } }>(
+    '/alerts/:alertId/read',
+    {
+      schema: { tags: ['Budgets'], summary: 'Mark alert as read', security: [{ cookieAuth: [] }] },
+      preHandler: [requireAuth],
+    },
+    async (req, reply) => {
+      const { organisationId } = req.user!
+      const { alertId } = z.object({ alertId: z.string().uuid() }).parse(req.params)
+      await markAlertReadUseCase(organisationId, alertId)
+      return reply.send({ data: null })
     },
   )
 }

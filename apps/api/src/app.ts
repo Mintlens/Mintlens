@@ -117,9 +117,10 @@ export async function buildApp() {
     csrfOpts: { hmacKey: csrfHmacKey },
   })
 
+  const isTest = process.env['NODE_ENV'] === 'test'
   await app.register(rateLimit, {
-    global: true,
-    max: 1000,
+    global: !isTest,
+    max: isTest ? 10_000 : 1000,
     timeWindow: '1 minute',
     keyGenerator: (req) => (req.headers['x-api-key'] as string) ?? req.ip,
   })
@@ -133,12 +134,14 @@ export async function buildApp() {
 
   // ── Routes ────────────────────────────────────────────────────
   const { authRoutes }       = await import('./modules/auth/presentation/auth.routes.js')
+  const { teamRoutes }       = await import('./modules/auth/presentation/team.routes.js')
   const { ingestionRoutes }  = await import('./modules/ingestion/presentation/ingestion.routes.js')
   const { analyticsRoutes }  = await import('./modules/analytics/presentation/analytics.routes.js')
   const { projectsRoutes }   = await import('./modules/projects/presentation/projects.routes.js')
   const { budgetsRoutes }    = await import('./modules/budgets/presentation/budgets.routes.js')
 
   await app.register(authRoutes,      { prefix: '/v1/auth' })
+  await app.register(teamRoutes,      { prefix: '/v1/team' })
   await app.register(ingestionRoutes, { prefix: '/v1/events' })
   await app.register(analyticsRoutes, { prefix: '/v1/analytics' })
   await app.register(projectsRoutes,  { prefix: '/v1/projects' })

@@ -7,6 +7,7 @@ import { apiFetch, ApiRequestError } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PasswordInput } from '@/components/ui/password-input'
 import MintlensLogo from '@/components/layout/logo'
 
 export default function SignupPage() {
@@ -68,7 +69,7 @@ export default function SignupPage() {
 
             <div className="space-y-1.5">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" placeholder="Min. 8 characters" autoComplete="new-password" value={form.password} onChange={set('password')} minLength={8} required />
+              <PasswordInput id="password" placeholder="Min. 8 characters" autoComplete="new-password" value={form.password} onChange={set('password')} minLength={8} required />
             </div>
 
             {error && (

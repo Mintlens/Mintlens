@@ -7,6 +7,7 @@ import { apiFetch, ApiRequestError } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PasswordInput } from '@/components/ui/password-input'
 import MintlensLogo from '@/components/layout/logo'
 
 export default function LoginPage() {
@@ -61,9 +62,8 @@ export default function LoginPage() {
 
             <div className="space-y-1.5">
               <Label htmlFor="password">Password</Label>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 placeholder="••••••••"
                 autoComplete="current-password"
                 value={password}
@@ -79,6 +79,12 @@ export default function LoginPage() {
             <Button type="submit" className="w-full" variant="primary" disabled={loading}>
               {loading ? 'Signing in…' : 'Sign in'}
             </Button>
+
+            <div className="text-right">
+              <Link href="/forgot-password" className="text-xs text-slate-400 hover:text-mint-500 transition-colors">
+                Forgot password?
+              </Link>
+            </div>
           </form>
         </div>
 

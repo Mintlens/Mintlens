@@ -18,23 +18,31 @@ export interface BudgetStatusRow {
   alertsTriggered: number[]
 }
 
-/** Returns the Redis key for a budget's current-period counter */
-function budgetRedisKey(
+/** Returns Redis key(s) for a budget's current-period counter */
+function budgetRedisKeys(
   scope: string,
   scopeId: string,
   period: BudgetPeriod,
-): string {
+): string[] {
   const now = new Date()
-  const today = now.toISOString().slice(0, 10) // YYYY-MM-DD
-  const month = today.slice(0, 7)              // YYYY-MM
+  const today = now.toISOString().slice(0, 10)
+  const month = today.slice(0, 7)
 
-  const periodKey = period === 'daily'
-    ? today
-    : period === 'monthly'
-      ? month
-      : today // rolling_30d uses same daily key; sum is aggregated separately
+  if (period === 'daily') {
+    return [`budget:${scope}:${scopeId}:daily:${today}`]
+  }
+  if (period === 'monthly') {
+    return [`budget:${scope}:${scopeId}:monthly:${month}`]
+  }
 
-  return `budget:${scope}:${scopeId}:${period === 'daily' ? 'daily' : 'monthly'}:${periodKey}`
+  // rolling_30d: sum the last 30 daily counters
+  const keys: string[] = []
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(now)
+    d.setDate(d.getDate() - i)
+    keys.push(`budget:${scope}:${scopeId}:daily:${d.toISOString().slice(0, 10)}`)
+  }
+  return keys
 }
 
 export async function listBudgetsUseCase(
@@ -58,18 +66,30 @@ export async function listBudgetsUseCase(
 
   if (rows.length === 0) return []
 
-  // Fetch current spend from Redis for all budgets in one pipeline
-  const pipeline = redis.pipeline()
-  for (const b of rows) {
+  // Build Redis key sets per budget (rolling_30d needs 30 keys, others need 1)
+  const keyGroups: string[][] = rows.map((b) => {
     const scopeId = b.tenantId ?? b.featureId ?? b.projectId
     const scope   = b.tenantId ? 'tenant' : b.featureId ? 'feature' : 'project'
-    pipeline.get(budgetRedisKey(scope, scopeId, b.period as BudgetPeriod))
+    return budgetRedisKeys(scope, scopeId, b.period as BudgetPeriod)
+  })
+
+  // Fetch all keys in a single pipeline
+  const pipeline = redis.pipeline()
+  for (const keys of keyGroups) {
+    for (const key of keys) pipeline.get(key)
   }
   const results = await pipeline.exec()
 
+  // Map results back to budgets, summing multi-key groups
+  let cursor = 0
   return rows.map((b, i) => {
-    const raw = results?.[i]?.[1]
-    const spentMicro   = raw ? Number(raw) : 0
+    const keyCount = keyGroups[i]!.length
+    let spentMicro = 0
+    for (let k = 0; k < keyCount; k++) {
+      const raw = results?.[cursor]?.[1]
+      if (raw) spentMicro += Number(raw)
+      cursor++
+    }
     const usagePercent = b.limitMicro > 0 ? (spentMicro / b.limitMicro) * 100 : 0
 
     // Determine which alert thresholds have been triggered

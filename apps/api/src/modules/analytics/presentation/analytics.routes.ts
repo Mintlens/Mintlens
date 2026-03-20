@@ -75,6 +75,19 @@ export async function analyticsRoutes(app: FastifyInstance) {
       ...(q.environment !== undefined ? { environment: q.environment } : {}),
     })
 
+    // CSV export
+    const format = (req.query as Record<string, string>).format
+    if (format === 'csv') {
+      const rows = result.timeSeries.map((p) =>
+        `${p.date},${(p.costMicro / 1_000_000).toFixed(6)},${p.tokens},${p.requests}`,
+      )
+      const csv = ['date,cost_usd,tokens,requests', ...rows].join('\n')
+      return reply
+        .header('Content-Type', 'text/csv')
+        .header('Content-Disposition', `attachment; filename="mintlens-cost-explorer-${q.from.toISOString().slice(0, 10)}-${q.to.toISOString().slice(0, 10)}.csv"`)
+        .send(csv)
+    }
+
     return reply.send({ data: result })
   })
 

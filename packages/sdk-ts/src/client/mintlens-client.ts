@@ -37,6 +37,12 @@ export interface MintlensClientOptions {
   flushIntervalMs?: number
 
   /**
+   * Set to false to disable all tracking (useful in tests or development).
+   * @default true
+   */
+  enabled?: boolean
+
+  /**
    * Enable debug logging to console.
    * @default false
    */
@@ -44,7 +50,7 @@ export interface MintlensClientOptions {
 
   /**
    * Called when an event fails to be sent (after retries).
-   * Does not throw — your application is never disrupted.
+   * Defaults to console.warn — set to () => {} to silence.
    */
   onError?: (error: Error) => void
 }
@@ -79,8 +85,9 @@ export class MintlensClient {
       defaults: {},
       maxBatchSize: 50,
       flushIntervalMs: 1_000,
+      enabled: true,
       debug: false,
-      onError: () => {},
+      onError: (err) => console.warn('[mintlens] Event delivery failed:', err.message),
       ...opts,
     }
 
@@ -105,6 +112,8 @@ export class MintlensClient {
    * Fire-and-forget: returns immediately, sends in background.
    */
   track(event: LlmUsageEventPayload): void {
+    if (!this.opts.enabled) return
+
     const enriched: LlmUsageEventPayload = {
       ...this.opts.defaults,
       ...event,
