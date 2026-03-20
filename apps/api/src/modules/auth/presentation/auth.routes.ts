@@ -132,7 +132,7 @@ export async function authRoutes(app: FastifyInstance) {
   app.post<{ Body: SignupBody }>('/signup', {
     schema: { body: signupBody, tags: ['Auth'], summary: 'Create account & organisation' },
     preHandler: [validateBody(signupBody)],
-    config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
+    config: { rateLimit: process.env['NODE_ENV'] === 'test' ? false : { max: 5, timeWindow: '1 minute' } },
   }, async (req, reply) => {
     const tokens = await signupUseCase(req.body)
     reply.setCookie('access_token', tokens.accessToken, COOKIE_OPTS)
@@ -148,7 +148,7 @@ export async function authRoutes(app: FastifyInstance) {
   app.post<{ Body: LoginBody }>('/login', {
     schema: { body: loginBody, tags: ['Auth'], summary: 'Login with email & password' },
     preHandler: [validateBody(loginBody)],
-    config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
+    config: { rateLimit: process.env['NODE_ENV'] === 'test' ? false : { max: 5, timeWindow: '1 minute' } },
   }, async (req, reply) => {
     const tokens = await loginUseCase(req.body)
     reply.setCookie('access_token', tokens.accessToken, COOKIE_OPTS)
@@ -265,7 +265,7 @@ export async function authRoutes(app: FastifyInstance) {
    */
   app.post('/reset-password', {
     schema: { tags: ['Auth'], summary: 'Reset password with token' },
-    config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
+    config: { rateLimit: process.env['NODE_ENV'] === 'test' ? false : { max: 5, timeWindow: '1 minute' } },
   }, async (req, reply) => {
     const { token, password } = z.object({
       token: z.string().min(1),

@@ -117,9 +117,10 @@ export async function buildApp() {
     csrfOpts: { hmacKey: csrfHmacKey },
   })
 
+  const isTest = process.env['NODE_ENV'] === 'test'
   await app.register(rateLimit, {
-    global: true,
-    max: 1000,
+    global: !isTest,
+    max: isTest ? 10_000 : 1000,
     timeWindow: '1 minute',
     keyGenerator: (req) => (req.headers['x-api-key'] as string) ?? req.ip,
   })
