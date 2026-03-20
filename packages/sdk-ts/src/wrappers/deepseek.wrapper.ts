@@ -26,7 +26,7 @@ import { wrapOpenAI } from './openai.wrapper.js'
  * })
  * ```
  *
- * NOTE: Streaming is not yet tracked.
+ * Streaming is fully supported (inherited from wrapOpenAI).
  */
 export function wrapDeepSeek<T extends OpenAICompatibleLike>(
   client: T,
