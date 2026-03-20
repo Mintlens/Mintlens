@@ -9,7 +9,7 @@ if (!_rawJwtSecret || _rawJwtSecret === _devFallback) {
   }
 }
 const JWT_SECRET = _rawJwtSecret ?? _devFallback
-const JWT_TTL_SECONDS = 60 * 60 * 24 * 7 // 7 days
+const JWT_TTL_SECONDS = 60 * 60 // 1 hour — sliding window extends on activity
 
 export function issueTokens(
   userId: string,
