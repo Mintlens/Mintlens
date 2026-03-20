@@ -326,6 +326,7 @@ export const budgetAlerts = pgTable(
         firedAt: timestamp('fired_at', { withTimezone: true }),
         /** Period key to prevent duplicate alerts, e.g. "2026-03" for monthly */
         period: text('period').notNull(),
+        readAt: timestamp('read_at', { withTimezone: true }),
         createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     },
     (t) => [index('budget_alerts_budget_id_idx').on(t.budgetId)],
