@@ -1,0 +1,1 @@
+ALTER TABLE "budget_alerts" ADD COLUMN "read_at" timestamp with time zone;
