@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { apiFetch, ApiRequestError } from '@/lib/api-client'
+import { PasswordInput } from '@/components/ui/password-input'
 import MintlensLogo from '@/components/layout/logo'
 
 export default function ResetPasswordPage() {
@@ -77,27 +78,23 @@ export default function ResetPasswordPage() {
             )}
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-slate-500">New password</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={8}
                 autoFocus
                 placeholder="Minimum 8 characters"
-                className="h-9 w-full rounded-xl border border-slate-100 bg-slate-50 px-3 text-sm text-slate-700 placeholder:text-slate-300 outline-none transition-colors focus:border-mint-300 focus:bg-white"
               />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-slate-500">Confirm password</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 required
                 minLength={8}
                 placeholder="Type it again"
-                className="h-9 w-full rounded-xl border border-slate-100 bg-slate-50 px-3 text-sm text-slate-700 placeholder:text-slate-300 outline-none transition-colors focus:border-mint-300 focus:bg-white"
               />
             </div>
             <button
