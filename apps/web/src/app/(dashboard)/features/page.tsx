@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Layers, Search, ArrowUpDown } from 'lucide-react'
+import { EmptyState } from '@/components/shared/empty-state'
 import { useQuery } from '@tanstack/react-query'
 import { useReadyProject } from '@/hooks/use-ready-project'
 import { useProjects } from '@/hooks/use-projects'
@@ -185,7 +186,11 @@ function FeaturesContent() {
 
       {/* Table */}
       {sorted.length === 0 ? (
-        <EmptyState hasSearch={!!search} />
+        <EmptyState
+          icon={Layers}
+          title={search ? 'No features matching your search' : 'No features tracked yet'}
+          description={search ? undefined : 'Features appear once your app sends requests with a feature key'}
+        />
       ) : (
         <Card className="overflow-hidden">
           <CardContent className="p-0">
@@ -281,22 +286,6 @@ function SortableHeader({
         <ArrowUpDown className={cn('h-3 w-3', active && 'text-mint-500')} />
       </button>
     </th>
-  )
-}
-
-function EmptyState({ hasSearch }: { hasSearch: boolean }) {
-  return (
-    <div className="flex h-48 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-white">
-      <Layers className="h-8 w-8 text-slate-200" />
-      <p className="text-sm text-slate-400">
-        {hasSearch ? 'No features matching your search' : 'No features tracked yet'}
-      </p>
-      {!hasSearch && (
-        <p className="text-xs text-slate-300">
-          Features appear once your app sends requests with a feature key
-        </p>
-      )}
-    </div>
   )
 }
 

@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Users, Search, ArrowUpDown } from 'lucide-react'
+import { EmptyState } from '@/components/shared/empty-state'
 // Org-wide by default — no project selection needed
 import { useTenants } from '@/hooks/use-analytics'
 import { TenantRow } from '@/components/tenants/tenant-row'
@@ -124,7 +125,11 @@ function TenantsContent() {
 
       {/* Table */}
       {sorted.length === 0 ? (
-        <EmptyState hasSearch={!!search} />
+        <EmptyState
+          icon={Users}
+          title={search ? 'No tenants matching your search' : 'No tenants tracked yet'}
+          description={search ? undefined : 'Tenants appear once your app sends requests with a tenant ID'}
+        />
       ) : (
         <Card className="overflow-hidden">
           <CardContent className="p-0">
@@ -196,22 +201,6 @@ function SortableHeader({
         <ArrowUpDown className={cn('h-3 w-3', active && 'text-mint-500')} />
       </button>
     </th>
-  )
-}
-
-function EmptyState({ hasSearch }: { hasSearch: boolean }) {
-  return (
-    <div className="flex h-48 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-white">
-      <Users className="h-8 w-8 text-slate-200" />
-      <p className="text-sm text-slate-400">
-        {hasSearch ? 'No tenants matching your search' : 'No tenants tracked yet'}
-      </p>
-      {!hasSearch && (
-        <p className="text-xs text-slate-300">
-          Tenants appear once your app sends requests with a tenant ID
-        </p>
-      )}
-    </div>
   )
 }
 

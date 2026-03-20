@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import { toast } from 'sonner'
+import { EmptyState } from '@/components/shared/empty-state'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -226,11 +227,11 @@ function ApiKeysContent() {
 
       {/* Active keys */}
       {activeKeys.length === 0 && !showCreate ? (
-        <div className="flex h-48 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-white">
-          <Key className="h-8 w-8 text-slate-200" />
-          <p className="text-sm text-slate-400">No API keys yet</p>
-          <p className="text-xs text-slate-300">Generate a key to start sending LLM events</p>
-        </div>
+        <EmptyState
+          icon={Key}
+          title="No API keys yet"
+          description="Generate a key to start sending LLM events"
+        />
       ) : (
         <div className="space-y-2">
           {activeKeys.map((k) => (

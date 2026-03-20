@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { FolderOpen, Plus, Globe, Code, FlaskConical, Calendar, ChevronRight, Pencil, Trash2, X, Check } from 'lucide-react'
+import { EmptyState } from '@/components/shared/empty-state'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api-client'
 import { useAuthStore } from '@/store/auth.store'
@@ -174,11 +175,11 @@ function ProjectsContent() {
 
       {/* Project grid — folder icons */}
       {!projects || projects.length === 0 ? (
-        <div className="flex h-48 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-white">
-          <FolderOpen className="h-8 w-8 text-slate-200" />
-          <p className="text-sm text-slate-400">No projects yet</p>
-          <p className="text-xs text-slate-300">Create your first project to start tracking costs</p>
-        </div>
+        <EmptyState
+          icon={FolderOpen}
+          title="No projects yet"
+          description="Create your first project to start tracking costs"
+        />
       ) : (
         <div className="grid gap-x-4 gap-y-10 pt-7 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {projects.map((p, idx) => {

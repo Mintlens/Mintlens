@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { List, ChevronLeft, ChevronRight } from 'lucide-react'
+import { EmptyState } from '@/components/shared/empty-state'
 import { useRequests } from '@/hooks/use-requests'
 import { RequestRow } from '@/components/requests/request-row'
 import { RequestsSkeleton } from '@/components/requests/requests-skeleton'
@@ -115,7 +116,7 @@ function RequestsContent() {
 
       {/* Table */}
       {rows.length === 0 ? (
-        <EmptyState />
+        <EmptyState icon={List} title="No requests found" description="Requests appear once your app sends LLM calls through the SDK" />
       ) : (
         <Card className="overflow-hidden">
           <CardContent className="p-0">
@@ -196,20 +197,8 @@ function RequestsContent() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Empty state                                                        */
+/*  Empty state — uses shared component                                */
 /* ------------------------------------------------------------------ */
-
-function EmptyState() {
-  return (
-    <div className="flex h-48 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-white">
-      <List className="h-8 w-8 text-slate-200" />
-      <p className="text-sm text-slate-400">No requests found</p>
-      <p className="text-xs text-slate-300">
-        Requests appear once your app sends LLM calls through the SDK
-      </p>
-    </div>
-  )
-}
 
 /* ------------------------------------------------------------------ */
 /*  Export                                                             */

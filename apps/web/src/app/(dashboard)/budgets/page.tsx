@@ -7,6 +7,7 @@ import { BudgetCard } from '@/components/budgets/budget-card'
 import { BudgetsSkeleton } from '@/components/budgets/budgets-skeleton'
 import { CreateBudgetDialog } from '@/components/budgets/create-budget-dialog'
 import { Wallet } from 'lucide-react'
+import { EmptyState } from '@/components/shared/empty-state'
 import { toast } from 'sonner'
 
 function BudgetsContent() {
@@ -35,11 +36,11 @@ function BudgetsContent() {
       {isLoading && !budgets ? (
         <BudgetsSkeleton />
       ) : !budgets || budgets.length === 0 ? (
-        <div className="flex h-48 flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-slate-200 bg-white">
-          <Wallet className="h-8 w-8 text-slate-200" />
-          <p className="text-sm text-slate-400">No active budgets</p>
-          <p className="text-xs text-slate-300">Create one to start tracking spend limits</p>
-        </div>
+        <EmptyState
+          icon={Wallet}
+          title="No active budgets"
+          description="Create one to start tracking spend limits"
+        />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {budgets.map((b) => (
