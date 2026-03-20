@@ -29,7 +29,7 @@ export function KpiCard({
   return (
     <Card
       className={cn(
-        'relative overflow-hidden',
+        'relative overflow-hidden transition-shadow duration-300 hover:shadow-card-hover',
         accent && 'border-l-2 border-l-mint-400',
       )}
     >

@@ -181,7 +181,7 @@ function ProjectsContent() {
         </div>
       ) : (
         <div className="grid gap-x-4 gap-y-10 pt-7 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {projects.map((p) => {
+          {projects.map((p, idx) => {
             const env = ENV_META[p.environment] ?? ENV_META['production']!
             const EnvIcon = env.icon
             const isSelected = p.id === selectedId
@@ -192,27 +192,12 @@ function ProjectsContent() {
               <div
                 key={p.id}
                 className={cn(
-                  'folder-card group relative p-5 text-left',
+                  'folder-card group relative p-5 text-left animate-stagger-in',
                   isSelected && 'ring-2 ring-mint-400 ring-offset-2',
                 )}
+                style={{ animationDelay: `${idx * 60}ms` }}
               >
-                {/* Action buttons */}
-                <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setEditingId(p.id); setEditName(p.name) }}
-                    className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-                    title="Rename"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setDeletingId(p.id) }}
-                    className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
-                    title="Delete"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
+                {/* Action buttons — hidden, shown on hover */}
 
                 {/* Inline rename */}
                 {isEditing ? (
@@ -280,15 +265,15 @@ function ProjectsContent() {
                     </div>
                   </div>
                 ) : (
-                  <button
-                    type="button"
-                    className="w-full text-left"
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    className="w-full cursor-pointer text-left"
                     onClick={() => {
                       selectProject(p.id)
                       router.push('/overview')
                     }}
                   >
-                    {/* Top row: name + chevron */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <h3 className="truncate text-sm font-semibold text-slate-800 group-hover:text-slate-900">
@@ -296,11 +281,25 @@ function ProjectsContent() {
                         </h3>
                         <p className="mt-0.5 truncate text-xs text-slate-400">{p.slug}</p>
                       </div>
-                      <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5" />
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); e.preventDefault(); setEditingId(p.id); setEditName(p.name) }}
+                          className="rounded-lg p-1 text-slate-400 opacity-0 transition-all hover:bg-slate-100 hover:text-slate-600 group-hover:opacity-100"
+                          title="Rename"
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); e.preventDefault(); setDeletingId(p.id) }}
+                          className="rounded-lg p-1 text-slate-400 opacity-0 transition-all hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                        <ChevronRight className="h-4 w-4 text-slate-300 transition-transform group-hover:translate-x-0.5" />
+                      </div>
                     </div>
-
-                    {/* Bottom row: env badge + date */}
-                    <div className="mt-3 flex items-center justify-between">
+                    <div className="mt-4 flex items-center justify-between">
                       <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium', env.color)}>
                         <EnvIcon className="h-3 w-3" />
                         {env.label}
@@ -310,7 +309,7 @@ function ProjectsContent() {
                         {formatDate(p.createdAt)}
                       </span>
                     </div>
-                  </button>
+                  </div>
                 )}
               </div>
             )

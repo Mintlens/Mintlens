@@ -13,7 +13,7 @@ export function TenantRow({ tenant: t, totalCost }: TenantRowProps) {
   const marginPct = (t.grossMargin ?? 0) * 100 // decimal → percentage for display
 
   return (
-    <tr className="group transition-colors hover:bg-slate-50/60">
+    <tr className="group transition-colors duration-150 hover:bg-mint-50/30">
       {/* Tenant identity */}
       <td className="py-3 pl-5 pr-3">
         <div className="flex items-center gap-3">

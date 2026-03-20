@@ -25,7 +25,7 @@ interface RequestRowProps {
 
 export function RequestRow({ row }: RequestRowProps) {
   return (
-    <tr className="group transition-colors hover:bg-slate-50/60">
+    <tr className="group transition-colors duration-150 hover:bg-mint-50/30">
       {/* Timestamp */}
       <td className="whitespace-nowrap py-2.5 pl-5 pr-3 text-xs text-slate-400">
         {formatDate(row.createdAt)}

@@ -361,17 +361,17 @@ function HorizontalBars({ rows }: { rows: CostByDimension[] }) {
 
   return (
     <div className="space-y-3 px-5 py-3">
-      {rows.slice(0, 5).map((r) => {
+      {rows.slice(0, 5).map((r, i) => {
         const pct = (r.costMicro / maxCost) * 100
         return (
-          <div key={r.key}>
+          <div key={r.key} className="animate-stagger-in" style={{ animationDelay: `${i * 80}ms` }}>
             <div className="mb-1 flex items-center justify-between">
               <span className="truncate text-[12px] font-medium text-slate-700">{r.label || r.key}</span>
               <span className="ml-2 shrink-0 text-[12px] tabular-nums text-slate-500">{formatUsd(r.costMicro)}</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-slate-100/70">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-indigo-300 to-indigo-500 transition-all duration-500"
+                className="h-full rounded-full bg-gradient-to-r from-indigo-300 to-indigo-500 transition-all duration-700"
                 style={{ width: `${Math.min(pct, 100)}%` }}
               />
             </div>
