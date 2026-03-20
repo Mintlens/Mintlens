@@ -8,8 +8,7 @@ import {
   List,
   Layers,
   Users,
-  UsersRound,
-  Shield,
+    Shield,
   FolderOpen,
   Key,
   Settings,
@@ -52,7 +51,6 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { href: '/tenants',       label: 'Tenants',          icon: Users },
       { href: '/budgets',       label: 'Budgets & Alerts', icon: Shield },
-      { href: '/team',          label: 'Team',             icon: UsersRound },
     ],
   },
   {

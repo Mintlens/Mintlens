@@ -1,7 +1,7 @@
 'use client'
 
-import { Suspense, useState } from 'react'
-import { Users, Plus, Shield, Crown, User, Trash2, X, Check, ChevronDown } from 'lucide-react'
+import { useState } from 'react'
+import { Users, Plus, Shield, Crown, User, Trash2, X, Check, Pencil } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api-client'
 import { useMe } from '@/hooks/use-me'
@@ -142,7 +142,7 @@ function TeamContent() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm text-slate-400">
@@ -324,14 +324,14 @@ function TeamContent() {
                             </button>
                           </div>
                         ) : (
-                          <div className="inline-flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                          <div className="inline-flex items-center gap-1">
                             {canChangeRole && !isMe && !isOwner && (
                               <button
                                 onClick={() => setRoleEditId(m.id)}
                                 className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
                                 title="Change role"
                               >
-                                <ChevronDown className="h-3.5 w-3.5" />
+                                <Pencil className="h-3.5 w-3.5" />
                               </button>
                             )}
                             {canRemove && (
@@ -364,7 +364,7 @@ function TeamContent() {
 
 function TeamSkeleton() {
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <Skeleton className="h-5 w-24" />
         <Skeleton className="h-9 w-36 rounded-xl" />
@@ -394,10 +394,4 @@ function TeamSkeleton() {
 /*  Export                                                             */
 /* ------------------------------------------------------------------ */
 
-export default function TeamPage() {
-  return (
-    <Suspense>
-      <TeamContent />
-    </Suspense>
-  )
-}
+export { TeamContent }
