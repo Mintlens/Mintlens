@@ -569,7 +569,11 @@ function Pricing() {
                 </ul>
 
                 <Link
-                  href={plan.name === 'Enterprise' ? '#' : '/signup'}
+                  href={
+                    plan.name === 'Enterprise' ? '#'
+                    : plan.name === 'Pro' ? '/settings?tab=subscription'
+                    : '/signup'
+                  }
                   className={cn(
                     'mt-8 block rounded-xl py-2.5 text-center text-sm font-semibold transition-all',
                     plan.highlight

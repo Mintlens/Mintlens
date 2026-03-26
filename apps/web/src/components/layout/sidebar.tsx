@@ -18,6 +18,8 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import MintlensLogo from './logo'
+import { PlanBadge } from '@/components/billing/plan-badge'
+import { useSubscription } from '@/hooks/use-subscription'
 import { apiFetch } from '@/lib/api-client'
 import { invalidateCsrfToken } from '@/hooks/use-csrf'
 import { useAuthStore } from '@/store/auth.store'
@@ -69,6 +71,7 @@ export function Sidebar() {
   const clearProject = useAuthStore((s) => s.clearProject)
   const collapsed    = useSidebarStore((s) => s.collapsed)
   const toggle       = useSidebarStore((s) => s.toggle)
+  const { data: sub } = useSubscription()
 
   async function logout() {
     await fetch(`${process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001'}/v1/auth/logout`, {
@@ -93,8 +96,11 @@ export function Sidebar() {
         'flex h-14 items-center',
         collapsed ? 'justify-center pl-3 pr-1' : 'justify-between px-3',
       )}>
-        <div className={cn('flex items-center', collapsed ? '' : 'pl-1')}>
+        <div className={cn('flex items-center gap-2', collapsed ? '' : 'pl-1')}>
           <MintlensLogo showWordmark={!collapsed} variant="light" className="h-6 w-6" />
+          {!collapsed && sub?.plan && (
+            <PlanBadge plan={sub.plan} className="text-[8px] px-1.5 py-0" />
+          )}
         </div>
         {!collapsed && (
           <button

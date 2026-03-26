@@ -11,6 +11,7 @@ import { cn } from '@/lib/cn'
 import { toast } from 'sonner'
 import { TeamContent } from '@/components/team/team-content'
 import { SubscriptionTab } from '@/components/billing/subscription-tab'
+import { PlanBadge } from '@/components/billing/plan-badge'
 
 /* ------------------------------------------------------------------ */
 /*  Settings page — static layout, no API needed for now               */
@@ -28,7 +29,13 @@ const TABS: { key: Tab; label: string; icon: typeof User }[] = [
 ]
 
 function SettingsContent() {
-  const [tab, setTab] = useState<Tab>('profile')
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+  const initialTab = (searchParams?.get('tab') as Tab) ?? 'profile'
+  const [tab, setTab] = useState<Tab>(
+    ['profile', 'organization', 'subscription', 'team', 'notifications', 'appearance'].includes(initialTab)
+      ? initialTab
+      : 'profile'
+  )
 
   return (
     <div className="p-6">
@@ -163,9 +170,8 @@ function OrganizationTab() {
         </FieldGroup>
         <FieldGroup label="Plan">
           <div className="flex items-center gap-3">
-            <span className="inline-flex items-center rounded-full bg-mint-50 px-2.5 py-0.5 text-xs font-medium text-mint-600">
-              {data?.role === 'owner' ? 'Free' : data?.role ?? 'Free'}
-            </span>
+            <PlanBadge plan="free" />
+            <span className="text-xs text-slate-400">Manage in the Subscription tab</span>
           </div>
         </FieldGroup>
         <div className="pt-2">
