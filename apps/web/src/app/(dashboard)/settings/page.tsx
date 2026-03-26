@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useState, useEffect } from 'react'
-import { Settings, User, Building2, Bell, Palette, Users, Moon, Sun, Monitor } from 'lucide-react'
+import { Settings, User, Building2, Bell, Palette, Users, CreditCard, Moon, Sun, Monitor } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -10,16 +10,18 @@ import { apiFetch } from '@/lib/api-client'
 import { cn } from '@/lib/cn'
 import { toast } from 'sonner'
 import { TeamContent } from '@/components/team/team-content'
+import { SubscriptionTab } from '@/components/billing/subscription-tab'
 
 /* ------------------------------------------------------------------ */
 /*  Settings page — static layout, no API needed for now               */
 /* ------------------------------------------------------------------ */
 
-type Tab = 'profile' | 'organization' | 'team' | 'notifications' | 'appearance'
+type Tab = 'profile' | 'organization' | 'subscription' | 'team' | 'notifications' | 'appearance'
 
 const TABS: { key: Tab; label: string; icon: typeof User }[] = [
   { key: 'profile',       label: 'Profile',       icon: User },
   { key: 'organization',  label: 'Organization',  icon: Building2 },
+  { key: 'subscription',  label: 'Subscription',  icon: CreditCard },
   { key: 'team',          label: 'Team',           icon: Users },
   { key: 'notifications', label: 'Notifications', icon: Bell },
   { key: 'appearance',    label: 'Appearance',    icon: Palette },
@@ -60,6 +62,7 @@ function SettingsContent() {
         <div className={cn('flex-1', tab === 'team' ? 'max-w-4xl' : 'max-w-2xl')}>
           {tab === 'profile' && <ProfileTab />}
           {tab === 'organization' && <OrganizationTab />}
+          {tab === 'subscription' && <SubscriptionTab />}
           {tab === 'team' && <TeamContent />}
           {tab === 'notifications' && <NotificationsTab />}
           {tab === 'appearance' && <AppearanceTab />}
