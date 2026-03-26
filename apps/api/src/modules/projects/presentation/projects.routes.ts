@@ -9,6 +9,9 @@ import {
   deleteProjectUseCase,
   listFeaturesWithCostUseCase,
 } from '../application/projects.usecase.js'
+import { getOrgPlanTier } from '../../../shared/middleware/require-plan.js'
+import { getPlanLimits } from '../../billing/domain/plan-limits.js'
+import { PlanLimitExceededError } from '../../../shared/errors/app-errors.js'
 
 const projectParams = z.object({ projectId: z.string().uuid() })
 
@@ -63,6 +66,17 @@ export async function projectsRoutes(app: FastifyInstance) {
     preHandler: [requireAuth],
   }, async (req, reply) => {
     const { organisationId } = req.user!
+
+    // Check project count against plan limit
+    const planTier = await getOrgPlanTier(organisationId)
+    const limits = getPlanLimits(planTier)
+    if (limits.maxProjects > 0) {
+      const existing = await listProjectsUseCase(organisationId)
+      if (existing.length >= limits.maxProjects) {
+        throw new PlanLimitExceededError('projects', limits.maxProjects)
+      }
+    }
+
     const body = createProjectBody.parse(req.body)
     const project = await createProjectUseCase(organisationId, {
       name: body.name,

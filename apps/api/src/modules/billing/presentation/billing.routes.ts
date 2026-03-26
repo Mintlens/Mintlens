@@ -6,6 +6,7 @@ import { createPortalUseCase } from '../application/create-portal.usecase.js'
 import { getSubscriptionUseCase } from '../application/get-subscription.usecase.js'
 import { cancelSubscriptionUseCase, resumeSubscriptionUseCase } from '../application/cancel-subscription.usecase.js'
 import { processWebhookEvent } from '../application/process-webhook.usecase.js'
+import { getUsageUseCase } from '../application/get-usage.usecase.js'
 import { getStripe, STRIPE_WEBHOOK_SECRET } from '../infrastructure/stripe.client.js'
 import { db } from '../../../shared/infrastructure/db.js'
 import { invoices } from '#schema'
@@ -138,6 +139,19 @@ export async function billingRoutes(app: FastifyInstance) {
         createdAt: r.createdAt.toISOString(),
       })),
     })
+  })
+
+  /**
+   * GET /v1/billing/usage
+   * Returns current period usage and plan limits.
+   */
+  app.get('/usage', {
+    schema: { tags: ['Billing'], summary: 'Get current usage', security: [{ cookieAuth: [] }] },
+    preHandler: [requireAuth],
+  }, async (req, reply) => {
+    const { organisationId } = req.user!
+    const result = await getUsageUseCase(organisationId)
+    return reply.send({ data: result })
   })
 
   /**

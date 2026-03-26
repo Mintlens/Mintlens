@@ -6,6 +6,9 @@ import { createBudgetBody, listBudgetsQuery, type CreateBudgetBody } from './bud
 import { createBudgetUseCase } from '../application/create-budget.usecase.js'
 import { listBudgetsUseCase, deleteBudgetUseCase } from '../application/list-budgets.usecase.js'
 import { listAlertsUseCase, markAlertReadUseCase } from '../application/list-alerts.usecase.js'
+import { getOrgPlanTier } from '../../../shared/middleware/require-plan.js'
+import { getPlanLimits } from '../../billing/domain/plan-limits.js'
+import { PlanLimitExceededError, PlanUpgradeRequiredError } from '../../../shared/errors/app-errors.js'
 
 const budgetParams = z.object({ budgetId: z.string().uuid() })
 
@@ -36,6 +39,24 @@ export async function budgetsRoutes(app: FastifyInstance) {
     async (req, reply) => {
       const { organisationId } = req.user!
       const body = req.body
+
+      // Check plan limits
+      const planTier = await getOrgPlanTier(organisationId)
+      const limits = getPlanLimits(planTier)
+
+      // Kill switch requires Pro+
+      if (body.killSwitchEnabled && !limits.killSwitch) {
+        throw new PlanUpgradeRequiredError(planTier, 'pro')
+      }
+
+      // Budget count limit
+      if (limits.maxBudgets > 0) {
+        const existing = await listBudgetsUseCase(organisationId, body.projectId)
+        if (existing.length >= limits.maxBudgets) {
+          throw new PlanLimitExceededError('budgets', limits.maxBudgets)
+        }
+      }
+
       const budget = await createBudgetUseCase(organisationId, {
         projectId:  body.projectId,
         name:       body.name,

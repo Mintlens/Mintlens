@@ -7,6 +7,9 @@ import { getTenantsOverviewUseCase } from '../application/get-tenants-overview.u
 import { getRequestsUseCase } from '../application/get-requests.usecase.js'
 import { summaryQuery, costExplorerQuery, tenantsOverviewQuery, requestsQuery } from './analytics.schemas.js'
 import { microToUsd } from '../../ingestion/application/cost-calculator.js'
+import { getOrgPlanTier } from '../../../shared/middleware/require-plan.js'
+import { getPlanLimits } from '../../billing/domain/plan-limits.js'
+import { PlanUpgradeRequiredError } from '../../../shared/errors/app-errors.js'
 
 const withOptionalProject = z.object({ projectId: z.string().uuid().optional() })
 
@@ -75,9 +78,12 @@ export async function analyticsRoutes(app: FastifyInstance) {
       ...(q.environment !== undefined ? { environment: q.environment } : {}),
     })
 
-    // CSV export
+    // CSV export — Pro+ only
     const format = (req.query as Record<string, string>).format
     if (format === 'csv') {
+      const planTier = await getOrgPlanTier(organisationId)
+      const limits = getPlanLimits(planTier)
+      if (!limits.csvExport) throw new PlanUpgradeRequiredError(planTier, 'pro')
       const rows = result.timeSeries.map((p) =>
         `${p.date},${(p.costMicro / 1_000_000).toFixed(6)},${p.tokens},${p.requests}`,
       )
