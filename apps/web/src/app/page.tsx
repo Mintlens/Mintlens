@@ -9,6 +9,7 @@ import {
   Check, ArrowRight, ExternalLink,
 } from 'lucide-react'
 import MintlensLogo from '@/components/layout/logo'
+import { ProviderLogos } from '@/components/landing/provider-logos'
 import { cn } from '@/lib/cn'
 
 /* ------------------------------------------------------------------ */
@@ -66,7 +67,7 @@ function Nav() {
           </Link>
           <Link
             href="/signup"
-            className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-slate-800 active:scale-[0.98]"
+            className="rounded-xl bg-mint-500 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-mint-600 active:scale-[0.98]"
           >
             Get Started Free
           </Link>
@@ -165,12 +166,7 @@ const res = await openai.chat.completions.create({
 
             {/* Provider logos */}
             <FadeIn delay={0.4}>
-              <div className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-3">
-                <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Works with</span>
-                {['OpenAI', 'Anthropic', 'Google', 'Mistral', 'Cohere', 'Groq'].map((name) => (
-                  <span key={name} className="text-xs font-medium text-slate-400">{name}</span>
-                ))}
-              </div>
+              <ProviderLogos className="mt-12 flex flex-wrap items-center gap-x-4 gap-y-3" />
             </FadeIn>
           </div>
 
@@ -391,7 +387,7 @@ function DashboardPreview() {
 
             {/* Dashboard mockup */}
             <div className="p-8 bg-gradient-to-b from-white to-slate-50/50">
-              <div className="grid grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-2 gap-4 mb-6 md:grid-cols-4">
                 {[
                   { label: 'Total cost', value: '$2,847.32', change: '+12%' },
                   { label: 'Requests', value: '184,291', change: '+8%' },
@@ -412,16 +408,13 @@ function DashboardPreview() {
               <div className="rounded-xl border border-slate-100 bg-white p-6">
                 <p className="text-xs font-medium text-slate-400 mb-4">Daily cost · Last 30 days</p>
                 <div className="flex items-end gap-1 h-32">
-                  {Array.from({ length: 30 }).map((_, i) => {
-                    const h = 20 + Math.sin(i * 0.3) * 15 + Math.random() * 25 + (i > 20 ? i * 1.5 : 0)
-                    return (
+                  {[32,45,38,52,41,58,35,62,48,55,42,68,51,44,72,56,49,75,60,53,78,64,57,82,70,63,88,76,69,95].map((h, i) => (
                       <div
                         key={i}
                         className="flex-1 rounded-sm bg-mint-400/80 transition-all hover:bg-mint-500"
-                        style={{ height: `${Math.min(h, 100)}%` }}
+                        style={{ height: `${h}%` }}
                       />
-                    )
-                  })}
+                  ))}
                 </div>
               </div>
             </div>

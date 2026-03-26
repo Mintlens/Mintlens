@@ -183,9 +183,12 @@ function NotificationsTab() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Notifications</CardTitle>
+        <div className="flex items-center gap-2">
+          <CardTitle>Notifications</CardTitle>
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-400">Coming soon</span>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 opacity-60 pointer-events-none">
         <ToggleRow
           label="Budget alerts"
           description="Get notified when budget thresholds are reached"
@@ -212,9 +215,12 @@ function AppearanceTab() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Appearance</CardTitle>
+        <div className="flex items-center gap-2">
+          <CardTitle>Appearance</CardTitle>
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-400">Coming soon</span>
+        </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="opacity-60 pointer-events-none">
         <p className="mb-4 text-sm text-slate-500">Choose your preferred theme</p>
         <div className="grid grid-cols-3 gap-3">
           {[
