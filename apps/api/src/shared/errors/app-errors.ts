@@ -52,6 +52,18 @@ export class ConflictError extends AppError {
   }
 }
 
+export class PlanUpgradeRequiredError extends AppError {
+  constructor(currentPlan: string, requiredPlan: string) {
+    super('PLAN_UPGRADE_REQUIRED', `This feature requires a ${requiredPlan} plan. Current plan: ${currentPlan}.`, 402)
+  }
+}
+
+export class PlanLimitExceededError extends AppError {
+  constructor(resource: string, limit: number) {
+    super('PLAN_LIMIT_EXCEEDED', `You've reached your plan limit of ${limit} ${resource}. Upgrade to increase your limit.`, 429)
+  }
+}
+
 export class BudgetExceededError extends AppError {
   constructor(
     public readonly budgetId: string,

@@ -51,6 +51,7 @@ export const organisations = pgTable('organisations', {
     name: text('name').notNull(),
     slug: text('slug').notNull().unique(),
     planTier: text('plan_tier').notNull().default('free'),
+    stripeCustomerId: text('stripe_customer_id').unique(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
@@ -380,3 +381,85 @@ export const modelPricing = pgTable(
 
 export type ModelPricing = typeof modelPricing.$inferSelect
 export type NewModelPricing = typeof modelPricing.$inferInsert
+
+// ────────────────────────────────────────────────────────────────
+// Subscriptions (Stripe)
+// ────────────────────────────────────────────────────────────────
+
+export const subscriptions = pgTable(
+    'subscriptions',
+    {
+        id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+        organisationId: uuid('organisation_id').notNull().unique().references(() => organisations.id, { onDelete: 'cascade' }),
+        stripeSubscriptionId: text('stripe_subscription_id').notNull().unique(),
+        stripePriceId: text('stripe_price_id').notNull(),
+        status: text('status').notNull(), // active | past_due | canceled | trialing | incomplete
+        currentPeriodStart: timestamp('current_period_start', { withTimezone: true }).notNull(),
+        currentPeriodEnd: timestamp('current_period_end', { withTimezone: true }).notNull(),
+        cancelAtPeriodEnd: boolean('cancel_at_period_end').notNull().default(false),
+        canceledAt: timestamp('canceled_at', { withTimezone: true }),
+        createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+        updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    },
+    (t) => [
+        index('subscriptions_org_id_idx').on(t.organisationId),
+    ],
+)
+
+export type Subscription = typeof subscriptions.$inferSelect
+
+// ────────────────────────────────────────────────────────────────
+// Invoices (Stripe)
+// ────────────────────────────────────────────────────────────────
+
+export const invoices = pgTable(
+    'invoices',
+    {
+        id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+        organisationId: uuid('organisation_id').notNull().references(() => organisations.id, { onDelete: 'cascade' }),
+        stripeInvoiceId: text('stripe_invoice_id').notNull().unique(),
+        amountPaid: integer('amount_paid').notNull(), // in cents
+        currency: text('currency').notNull().default('usd'),
+        status: text('status').notNull(), // paid | open | void | uncollectible
+        invoiceUrl: text('invoice_url'),
+        invoicePdf: text('invoice_pdf'),
+        periodStart: timestamp('period_start', { withTimezone: true }).notNull(),
+        periodEnd: timestamp('period_end', { withTimezone: true }).notNull(),
+        createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    },
+    (t) => [
+        index('invoices_org_id_idx').on(t.organisationId),
+    ],
+)
+
+export type Invoice = typeof invoices.$inferSelect
+
+// ────────────────────────────────────────────────────────────────
+// Usage Records (monthly aggregation for billing audit)
+// ────────────────────────────────────────────────────────────────
+
+export const usageRecords = pgTable(
+    'usage_records',
+    {
+        id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+        organisationId: uuid('organisation_id').notNull().references(() => organisations.id, { onDelete: 'cascade' }),
+        period: text('period').notNull(), // YYYY-MM
+        requestCount: integer('request_count').notNull().default(0),
+        tokensTotal: integer('tokens_total').notNull().default(0),
+        costTotalMicro: integer('cost_total_micro').notNull().default(0),
+        updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    },
+    (t) => [
+        unique('usage_records_org_period_unique').on(t.organisationId, t.period),
+    ],
+)
+
+// ────────────────────────────────────────────────────────────────
+// Stripe Webhook Events (idempotency)
+// ────────────────────────────────────────────────────────────────
+
+export const stripeWebhookEvents = pgTable('stripe_webhook_events', {
+    id: text('id').primaryKey(), // Stripe event ID (evt_xxx)
+    eventType: text('event_type').notNull(),
+    processedAt: timestamp('processed_at', { withTimezone: true }).notNull().defaultNow(),
+})
