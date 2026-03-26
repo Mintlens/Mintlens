@@ -139,6 +139,7 @@ export async function buildApp() {
   const { analyticsRoutes }  = await import('./modules/analytics/presentation/analytics.routes.js')
   const { projectsRoutes }   = await import('./modules/projects/presentation/projects.routes.js')
   const { budgetsRoutes }    = await import('./modules/budgets/presentation/budgets.routes.js')
+  const { billingRoutes }    = await import('./modules/billing/presentation/billing.routes.js')
 
   await app.register(authRoutes,      { prefix: '/v1/auth' })
   await app.register(teamRoutes,      { prefix: '/v1/team' })
@@ -146,6 +147,7 @@ export async function buildApp() {
   await app.register(analyticsRoutes, { prefix: '/v1/analytics' })
   await app.register(projectsRoutes,  { prefix: '/v1/projects' })
   await app.register(budgetsRoutes,   { prefix: '/v1/budgets' })
+  await app.register(billingRoutes,   { prefix: '/v1/billing' })
 
   return app
 }
