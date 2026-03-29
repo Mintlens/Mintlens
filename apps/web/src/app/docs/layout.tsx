@@ -8,6 +8,14 @@ const DOCS_NAV = [
   { label: 'API Reference', href: '/docs/api' },
 ]
 
+const GUIDES_NAV = [
+  { label: 'OpenAI', href: '/docs/guides/openai' },
+  { label: 'Anthropic', href: '/docs/guides/anthropic' },
+  { label: 'Multi-Tenant Tracking', href: '/docs/guides/multi-tenant' },
+  { label: 'Budgets & Kill-Switch', href: '/docs/guides/budgets' },
+  { label: 'Self-Hosting', href: '/docs/guides/self-hosting' },
+]
+
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-white">
@@ -33,6 +41,19 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
           <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400">Documentation</p>
           <nav className="space-y-1">
             {DOCS_NAV.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="block rounded-lg px-3 py-1.5 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          <p className="mb-3 mt-8 text-xs font-semibold uppercase tracking-wider text-slate-400">Guides</p>
+          <nav className="space-y-1">
+            {GUIDES_NAV.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
